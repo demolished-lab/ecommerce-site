@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: marketplace-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: marketplace
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: marketplace-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Application
+  api:
+    build: .
+    container_name: marketplace-api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/marketplace
+      - REDIS_URL=redis://redis:6379/0
+      - DEBUG=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
+
+  # Celery Worker (for background tasks)
+  celery:
+    build: .
+    container_name: marketplace-celery
+    restart: always
+    command: celery -A app.celery_app worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/marketplace
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+
+  # Celery Beat (for scheduled tasks)
+  celery-beat:
+    build: .
+    container_name: marketplace-celery-beat
+    restart: always
+    command: celery -A app.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/marketplace
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads:
