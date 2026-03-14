@@ -1,7 +1,17 @@
 import uuid
 from datetime import datetime, timedelta
-from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, Float, Numeric, JSON, Boolean
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import (
+    Column,
+    String,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Float,
+    Numeric,
+    JSON,
+    Boolean,
+)
+from app.config.database import UUID
 from sqlalchemy.orm import relationship
 
 from app.config.database import Base
@@ -11,8 +21,12 @@ class Cart(Base):
     __tablename__ = "carts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=True)
-    session_id = Column(String(255), unique=True, nullable=True, index=True)  # For guest users
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=True
+    )
+    session_id = Column(
+        String(255), unique=True, nullable=True, index=True
+    )  # For guest users
 
     # Cart Settings
     currency = Column(String(3), default="USD")
@@ -39,7 +53,9 @@ class Cart(Base):
     converted_to_order_id = Column(UUID(as_uuid=True), nullable=True)
 
     # Expiration
-    expires_at = Column(DateTime, default=lambda: datetime.utcnow() + timedelta(days=30))
+    expires_at = Column(
+        DateTime, default=lambda: datetime.utcnow() + timedelta(days=30)
+    )
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -47,7 +63,9 @@ class Cart(Base):
 
     # Relationships
     user = relationship("User", back_populates="cart")
-    items = relationship("CartItem", back_populates="cart", cascade="all, delete-orphan")
+    items = relationship(
+        "CartItem", back_populates="cart", cascade="all, delete-orphan"
+    )
 
     def is_expired(self):
         return self.expires_at and self.expires_at < datetime.utcnow()
@@ -67,7 +85,9 @@ class CartItem(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     cart_id = Column(UUID(as_uuid=True), ForeignKey("carts.id"), nullable=False)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
-    variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id"), nullable=True)
+    variant_id = Column(
+        UUID(as_uuid=True), ForeignKey("product_variants.id"), nullable=True
+    )
 
     # Quantity
     quantity = Column(Integer, default=1, nullable=False)
@@ -111,7 +131,9 @@ class CartItem(Base):
         if not self.product:
             return False
         if self.variant_id:
-            variant = next((v for v in self.product.variants if v.id == self.variant_id), None)
+            variant = next(
+                (v for v in self.product.variants if v.id == self.variant_id), None
+            )
             if variant:
                 return variant.stock_quantity >= self.quantity
         return self.product.stock_quantity >= self.quantity

@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
-import { HeaderComponent } from './components/shared/header/header.component';
-import { FooterComponent } from './components/shared/footer/footer.component';
+import { Component } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { RouterOutlet } from "@angular/router";
+import { HeaderComponent } from "./components/shared/header/header.component";
+import { FooterComponent } from "./components/shared/footer/footer.component";
 
 @Component({
-  selector: 'app-root',
+  selector: "app-root",
   standalone: true,
   imports: [CommonModule, RouterOutlet, HeaderComponent, FooterComponent],
   template: `
@@ -17,17 +17,19 @@ import { FooterComponent } from './components/shared/footer/footer.component';
       <app-footer></app-footer>
     </div>
   `,
-  styles: [`
-    .app-container {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    .main-content {
-      flex: 1;
-    }
-  `]
+  styles: [
+    `
+      .app-container {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .main-content {
+        flex: 1;
+      }
+    `,
+  ],
 })
 export class AppComponent {
-  title = 'Marketplace';
+  title = "Marketplace";
 }

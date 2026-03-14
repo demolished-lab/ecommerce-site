@@ -13,8 +13,15 @@ export interface Seller {
   address_city: string;
   address_state: string;
   address_country: string;
-  status: 'pending' | 'under_review' | 'approved' | 'active' | 'suspended' | 'rejected' | 'deactivated';
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum';
+  status:
+    | "pending"
+    | "under_review"
+    | "approved"
+    | "active"
+    | "suspended"
+    | "rejected"
+    | "deactivated";
+  tier: "bronze" | "silver" | "gold" | "platinum";
   commission_rate: number;
   is_verified: boolean;
   total_products: number;

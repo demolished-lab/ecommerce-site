@@ -1,7 +1,18 @@
 import uuid
-from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Enum as SQLEnum, Integer, Float, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from datetime import datetime, timezone
+from sqlalchemy import (
+    Column,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Text,
+    Enum as SQLEnum,
+    Integer,
+    Float,
+    JSON,
+)
+from app.config.database import UUID
 from sqlalchemy.orm import relationship
 import enum
 
@@ -9,13 +20,13 @@ from app.config.database import Base
 
 
 class SellerStatus(str, enum.Enum):
-    PENDING = "pending"           # Applied but not reviewed
-    UNDER_REVIEW = "under_review" # Being reviewed by admin
-    APPROVED = "approved"         # Approved but onboarding not complete
-    ACTIVE = "active"             # Fully active
-    SUSPENDED = "suspended"       # Temporarily suspended
-    REJECTED = "rejected"         # Application rejected
-    DEACTIVATED = "deactivated"   # Permanently deactivated
+    PENDING = "pending"  # Applied but not reviewed
+    UNDER_REVIEW = "under_review"  # Being reviewed by admin
+    APPROVED = "approved"  # Approved but onboarding not complete
+    ACTIVE = "active"  # Fully active
+    SUSPENDED = "suspended"  # Temporarily suspended
+    REJECTED = "rejected"  # Application rejected
+    DEACTIVATED = "deactivated"  # Permanently deactivated
 
 
 class SellerTier(str, enum.Enum):
@@ -29,7 +40,9 @@ class Seller(Base):
     __tablename__ = "sellers"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False
+    )
 
     # Store Information
     store_name = Column(String(150), unique=True, nullable=False, index=True)
@@ -40,7 +53,9 @@ class Seller(Base):
 
     # Business Information
     business_name = Column(String(200), nullable=False)
-    business_type = Column(String(50), nullable=False)  # LLC, Corporation, Sole Proprietorship, etc.
+    business_type = Column(
+        String(50), nullable=False
+    )  # LLC, Corporation, Sole Proprietorship, etc.
     business_registration_number = Column(String(100), nullable=True)
     tax_id = Column(String(50), nullable=True)
     vat_number = Column(String(50), nullable=True)
@@ -94,18 +109,26 @@ class Seller(Base):
     social_links = Column(JSON, default=dict)  # {facebook, instagram, twitter, etc.}
 
     # Timestamps
-    applied_at = Column(DateTime, default=datetime.utcnow)
+    applied_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     reviewed_at = Column(DateTime, nullable=True)
     activated_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     deactivated_at = Column(DateTime, nullable=True)
     deactivation_reason = Column(Text, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="seller_profile", foreign_keys=[user_id])
-    products = relationship("Product", back_populates="seller", cascade="all, delete-orphan")
-    documents = relationship("SellerDocument", back_populates="seller", cascade="all, delete-orphan")
+    products = relationship(
+        "Product", back_populates="seller", cascade="all, delete-orphan"
+    )
+    documents = relationship(
+        "SellerDocument", back_populates="seller", cascade="all, delete-orphan"
+    )
     orders = relationship("Order", back_populates="seller")
 
     def is_active(self):
@@ -121,7 +144,9 @@ class SellerDocument(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     seller_id = Column(UUID(as_uuid=True), ForeignKey("sellers.id"), nullable=False)
 
-    document_type = Column(String(50), nullable=False)  # id_proof, business_license, tax_document, etc.
+    document_type = Column(
+        String(50), nullable=False
+    )  # id_proof, business_license, tax_document, etc.
     document_name = Column(String(200), nullable=False)
     file_url = Column(String(500), nullable=False)
     file_size = Column(Integer, nullable=True)  # in bytes
@@ -132,7 +157,7 @@ class SellerDocument(Base):
     verified_by = Column(UUID(as_uuid=True), nullable=True)
     rejection_reason = Column(Text, nullable=True)
 
-    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    uploaded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     expires_at = Column(DateTime, nullable=True)
 
     # Relationships

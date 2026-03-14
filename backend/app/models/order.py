@@ -1,7 +1,19 @@
 import uuid
-from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Enum as SQLEnum, Integer, Float, Numeric, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from datetime import datetime, timezone
+from sqlalchemy import (
+    Column,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Text,
+    Enum as SQLEnum,
+    Integer,
+    Float,
+    Numeric,
+    JSON,
+)
+from app.config.database import UUID
 from sqlalchemy.orm import relationship
 import enum
 
@@ -69,11 +81,15 @@ class Order(Base):
     # Relationships
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     seller_id = Column(UUID(as_uuid=True), ForeignKey("sellers.id"), nullable=False)
-    shipping_address_id = Column(UUID(as_uuid=True), ForeignKey("user_addresses.id"), nullable=False)
+    shipping_address_id = Column(
+        UUID(as_uuid=True), ForeignKey("user_addresses.id"), nullable=True
+    )
 
     # Order Status
     status = Column(SQLEnum(OrderStatus), default=OrderStatus.CREATED, nullable=False)
-    status_history = relationship("OrderStatusHistory", back_populates="order", cascade="all, delete-orphan")
+    status_history = relationship(
+        "OrderStatusHistory", back_populates="order", cascade="all, delete-orphan"
+    )
 
     # Pricing Breakdown
     subtotal = Column(Numeric(12, 2), nullable=False)  # Sum of items
@@ -119,8 +135,12 @@ class Order(Base):
     user_agent = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     cancelled_at = Column(DateTime, nullable=True)
     cancel_reason = Column(Text, nullable=True)
     completed_at = Column(DateTime, nullable=True)
@@ -128,15 +148,19 @@ class Order(Base):
     # Relationships
     user = relationship("User", back_populates="orders")
     seller = relationship("Seller", back_populates="orders")
-    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
-    payments = relationship("Payment", back_populates="order", cascade="all, delete-orphan")
+    items = relationship(
+        "OrderItem", back_populates="order", cascade="all, delete-orphan"
+    )
+    payments = relationship(
+        "Payment", back_populates="order", cascade="all, delete-orphan"
+    )
 
     def can_cancel(self):
         return self.status in [
             OrderStatus.CREATED,
             OrderStatus.PENDING_PAYMENT,
             OrderStatus.PAYMENT_COMPLETED,
-            OrderStatus.CONFIRMED
+            OrderStatus.CONFIRMED,
         ]
 
     def can_refund(self):
@@ -146,7 +170,7 @@ class Order(Base):
             OrderStatus.PROCESSING,
             OrderStatus.SHIPPED,
             OrderStatus.DELIVERED,
-            OrderStatus.COMPLETED
+            OrderStatus.COMPLETED,
         ]
 
     def get_total_items(self):
@@ -159,7 +183,9 @@ class OrderItem(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
-    variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id"), nullable=True)
+    variant_id = Column(
+        UUID(as_uuid=True), ForeignKey("product_variants.id"), nullable=True
+    )
 
     # Product Snapshot (in case product changes after order)
     product_name = Column(String(200), nullable=False)
@@ -189,8 +215,12 @@ class OrderItem(Base):
     # Customizations
     customizations = Column(JSON, nullable=True)  # {engraving: "John", color: "red"}
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     # Relationships
     order = relationship("Order", back_populates="items")
@@ -210,7 +240,7 @@ class OrderStatusHistory(Base):
 
     context = Column(JSON, default=dict)  # Additional context
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     order = relationship("Order", back_populates="status_history")
@@ -257,7 +287,7 @@ class Payment(Base):
     completed_at = Column(DateTime, nullable=True)
     failed_at = Column(DateTime, nullable=True)
     refunded_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Raw response from provider (for debugging)
     raw_response = Column(JSON, nullable=True)

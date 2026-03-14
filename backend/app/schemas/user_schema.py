@@ -64,22 +64,22 @@ class UserCreate(BaseModel):
     last_name: str = Field(..., min_length=2, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
 
-    @validator('password')
+    @validator("password")
     def password_strength(cls, v):
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not re.search(r'[a-z]', v):
-            raise ValueError('Password must contain at least one lowercase letter')
-        if not re.search(r'\d', v):
-            raise ValueError('Password must contain at least one digit')
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"\d", v):
+            raise ValueError("Password must contain at least one digit")
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError('Password must contain at least one special character')
+            raise ValueError("Password must contain at least one special character")
         return v
 
-    @validator('phone')
+    @validator("phone")
     def phone_format(cls, v):
-        if v and not re.match(r'^[\d\s\-\+\(\)]{10,20}$', v):
-            raise ValueError('Invalid phone number format')
+        if v and not re.match(r"^[\d\s\-\+\(\)]{10,20}$", v):
+            raise ValueError("Invalid phone number format")
         return v
 
 
@@ -135,10 +135,10 @@ class PasswordChange(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=100)
     confirm_password: str
 
-    @validator('confirm_password')
+    @validator("confirm_password")
     def passwords_match(cls, v, values):
-        if 'new_password' in values and v != values['new_password']:
-            raise ValueError('Passwords do not match')
+        if "new_password" in values and v != values["new_password"]:
+            raise ValueError("Passwords do not match")
         return v
 
 

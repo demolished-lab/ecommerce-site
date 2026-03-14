@@ -1,10 +1,8 @@
 from passlib.context import CryptContext
 
-# Configure bcrypt for password hashing
+# Configure secure hashing for passwords
 pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=12  # Cost factor
+    schemes=["pbkdf2_sha256"], deprecated="auto", pbkdf2_sha256__rounds=30000
 )
 
 
@@ -39,7 +37,7 @@ def is_password_strong(password: str) -> tuple[bool, str]:
     if not any(c.isdigit() for c in password):
         return False, "Password must contain at least one digit"
 
-    if not any(c in "!@#$%^&*(),.?\":{}|<>" for c in password):
+    if not any(c in '!@#$%^&*(),.?":{}|<>' for c in password):
         return False, "Password must contain at least one special character"
 
     return True, "Password is strong"

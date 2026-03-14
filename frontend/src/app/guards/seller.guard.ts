@@ -1,36 +1,36 @@
-import { Injectable } from '@angular/core';
+import { Injectable } from "@angular/core";
 import {
   CanActivate,
   CanActivateChild,
   ActivatedRouteSnapshot,
   RouterStateSnapshot,
   Router,
-  UrlTree
-} from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { AuthService } from '../services/auth.service';
-import { SellerService } from '../services/seller.service';
+  UrlTree,
+} from "@angular/router";
+import { Observable, of } from "rxjs";
+import { AuthService } from "../services/auth.service";
+import { SellerService } from "../services/seller.service";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class SellerGuard implements CanActivate, CanActivateChild {
   constructor(
     private authService: AuthService,
     private sellerService: SellerService,
-    private router: Router
+    private router: Router,
   ) {}
 
   canActivate(
     route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
+    state: RouterStateSnapshot,
   ): Observable<boolean | UrlTree> {
     return this.checkSellerStatus();
   }
 
   canActivateChild(
     route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
+    state: RouterStateSnapshot,
   ): Observable<boolean | UrlTree> {
     return this.checkSellerStatus();
   }
@@ -39,7 +39,7 @@ export class SellerGuard implements CanActivate, CanActivateChild {
     const user = this.authService.currentUser;
 
     if (!user) {
-      return of(this.router.createUrlTree(['/login']));
+      return of(this.router.createUrlTree(["/login"]));
     }
 
     // Admins can access seller routes
@@ -48,9 +48,9 @@ export class SellerGuard implements CanActivate, CanActivateChild {
     }
 
     // Check if user is a seller
-    if (user.role !== 'seller') {
+    if (user.role !== "seller") {
       // User is not a seller, redirect to seller application
-      return of(this.router.createUrlTree(['/become-seller']));
+      return of(this.router.createUrlTree(["/become-seller"]));
     }
 
     // User is a seller, allow access

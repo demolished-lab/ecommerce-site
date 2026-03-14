@@ -9,8 +9,12 @@ from app.models.user import User, UserRole
 from app.models.seller import Seller, SellerStatus, SellerTier, SellerDocument
 from app.models.admin import AdminLog, AdminLogAction
 from app.schemas.seller_schema import (
-    SellerCreate, SellerUpdate, SellerAdminUpdate, SellerReviewRequest,
-    SellerDashboardStats, SellerSalesReport
+    SellerCreate,
+    SellerUpdate,
+    SellerAdminUpdate,
+    SellerReviewRequest,
+    SellerDashboardStats,
+    SellerSalesReport,
 )
 from app.config.settings import settings
 
@@ -21,8 +25,8 @@ class SellerService:
 
     def _generate_slug(self, store_name: str) -> str:
         """Generate URL-friendly slug from store name"""
-        slug = re.sub(r'[^\w\s-]', '', store_name.lower())
-        slug = re.sub(r'[\s]+', '-', slug)
+        slug = re.sub(r"[^\w\s-]", "", store_name.lower())
+        slug = re.sub(r"[\s]+", "-", slug)
         return slug[:150]
 
     def apply_as_seller(self, user_id: UUID, seller_data: SellerCreate) -> Seller:
@@ -31,26 +35,29 @@ class SellerService:
         user = self.db.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
 
         # Check if already a seller
-        existing_seller = self.db.query(Seller).filter(Seller.user_id == user_id).first()
+        existing_seller = (
+            self.db.query(Seller).filter(Seller.user_id == user_id).first()
+        )
         if existing_seller:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User is already a seller or has a pending application"
+                detail="User is already a seller or has a pending application",
             )
 
         # Check if store name is taken
-        existing_store = self.db.query(Seller).filter(
-            Seller.store_name == seller_data.store_name
-        ).first()
+        existing_store = (
+            self.db.query(Seller)
+            .filter(Seller.store_name == seller_data.store_name)
+            .first()
+        )
         if existing_store:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Store name already taken"
+                detail="Store name already taken",
             )
 
         # Create seller application
@@ -84,10 +91,12 @@ class SellerService:
             return_policy=seller_data.return_policy,
             shipping_policy=seller_data.shipping_policy,
             processing_time_days=seller_data.processing_time_days,
-            social_links=seller_data.social_links.dict() if seller_data.social_links else {},
+            social_links=(
+                seller_data.social_links.dict() if seller_data.social_links else {}
+            ),
             status=SellerStatus.PENDING,
             tier=SellerTier.BRONZE,
-            commission_rate=settings.DEFAULT_TAX_RATE
+            commission_rate=settings.DEFAULT_TAX_RATE,
         )
 
         self.db.add(seller)
@@ -117,13 +126,12 @@ class SellerService:
         seller = self.get_seller_by_id(seller_id)
         if not seller:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Seller not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Seller not found"
             )
 
         update_dict = update_data.dict(exclude_unset=True)
         for field, value in update_dict.items():
-            if field == 'social_links' and value:
+            if field == "social_links" and value:
                 setattr(seller, field, value.dict())
             else:
                 setattr(seller, field, value)
@@ -137,8 +145,7 @@ class SellerService:
         seller = self.get_seller_by_id(seller_id)
         if not seller:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Seller not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Seller not found"
             )
 
         from app.models.product import Product, ProductStatus
@@ -147,65 +154,70 @@ class SellerService:
         # Count products by status
         products = self.db.query(Product).filter(Product.seller_id == seller_id).all()
         active_products = len([p for p in products if p.status == ProductStatus.ACTIVE])
-        out_of_stock = len([p for p in products if p.status == ProductStatus.OUT_OF_STOCK])
+        out_of_stock = len(
+            [p for p in products if p.status == ProductStatus.OUT_OF_STOCK]
+        )
 
         # Count orders by status
         orders = self.db.query(Order).filter(Order.seller_id == seller_id).all()
         order_counts = {
-            'pending': 0, 'processing': 0, 'shipped': 0,
-            'delivered': 0, 'cancelled': 0
+            "pending": 0,
+            "processing": 0,
+            "shipped": 0,
+            "delivered": 0,
+            "cancelled": 0,
         }
         for order in orders:
             if order.status == OrderStatus.CONFIRMED:
-                order_counts['pending'] += 1
+                order_counts["pending"] += 1
             elif order.status == OrderStatus.PROCESSING:
-                order_counts['processing'] += 1
+                order_counts["processing"] += 1
             elif order.status == OrderStatus.SHIPPED:
-                order_counts['shipped'] += 1
+                order_counts["shipped"] += 1
             elif order.status == OrderStatus.DELIVERED:
-                order_counts['delivered'] += 1
+                order_counts["delivered"] += 1
             elif order.status == OrderStatus.CANCELLED:
-                order_counts['cancelled'] += 1
+                order_counts["cancelled"] += 1
 
         return SellerDashboardStats(
             total_products=len(products),
             active_products=active_products,
             out_of_stock_products=out_of_stock,
             total_orders=seller.total_orders,
-            pending_orders=order_counts['pending'],
-            processing_orders=order_counts['processing'],
-            shipped_orders=order_counts['shipped'],
-            delivered_orders=order_counts['delivered'],
-            cancelled_orders=order_counts['cancelled'],
+            pending_orders=order_counts["pending"],
+            processing_orders=order_counts["processing"],
+            shipped_orders=order_counts["shipped"],
+            delivered_orders=order_counts["delivered"],
+            cancelled_orders=order_counts["cancelled"],
             total_revenue=float(seller.total_revenue),
             revenue_this_month=0.0,  # Calculate in production
             revenue_last_month=0.0,
             revenue_change_percent=0.0,
             total_customers=0,
             repeat_customers=0,
-            average_order_value=float(seller.total_revenue / seller.total_orders) if seller.total_orders > 0 else 0.0,
+            average_order_value=(
+                float(seller.total_revenue / seller.total_orders)
+                if seller.total_orders > 0
+                else 0.0
+            ),
             average_rating=seller.average_rating,
-            review_count=seller.review_count
+            review_count=seller.review_count,
         )
 
     def review_seller_application(
-        self,
-        seller_id: UUID,
-        review_data: SellerReviewRequest,
-        admin_id: UUID
+        self, seller_id: UUID, review_data: SellerReviewRequest, admin_id: UUID
     ) -> Seller:
         """Admin reviews seller application"""
         seller = self.get_seller_by_id(seller_id)
         if not seller:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Seller not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Seller not found"
             )
 
         if seller.status not in [SellerStatus.PENDING, SellerStatus.UNDER_REVIEW]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Seller application is not pending review"
+                detail="Seller application is not pending review",
             )
 
         old_status = seller.status
@@ -227,8 +239,7 @@ class SellerService:
             log_action = AdminLogAction.USER_UPDATED
         else:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid review action"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid review action"
             )
 
         self.db.commit()
@@ -240,7 +251,7 @@ class SellerService:
             entity_type="seller",
             entity_id=seller.id,
             old_values={"status": old_status.value},
-            new_values={"status": seller.status.value, "notes": review_data.notes}
+            new_values={"status": seller.status.value, "notes": review_data.notes},
         )
         self.db.add(log)
         self.db.commit()
@@ -248,43 +259,39 @@ class SellerService:
         return seller
 
     def admin_update_seller(
-        self,
-        seller_id: UUID,
-        update_data: SellerAdminUpdate,
-        admin_id: UUID
+        self, seller_id: UUID, update_data: SellerAdminUpdate, admin_id: UUID
     ) -> Seller:
         """Admin updates seller settings"""
         seller = self.get_seller_by_id(seller_id)
         if not seller:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Seller not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Seller not found"
             )
 
         old_values = {}
         new_values = {}
 
         if update_data.status:
-            old_values['status'] = seller.status.value
+            old_values["status"] = seller.status.value
             seller.status = update_data.status
-            new_values['status'] = update_data.status.value
+            new_values["status"] = update_data.status.value
 
         if update_data.tier:
-            old_values['tier'] = seller.tier.value
+            old_values["tier"] = seller.tier.value
             seller.tier = update_data.tier
-            new_values['tier'] = update_data.tier.value
+            new_values["tier"] = update_data.tier.value
 
         if update_data.commission_rate is not None:
-            old_values['commission_rate'] = seller.commission_rate
+            old_values["commission_rate"] = seller.commission_rate
             seller.commission_rate = update_data.commission_rate
-            new_values['commission_rate'] = update_data.commission_rate
+            new_values["commission_rate"] = update_data.commission_rate
 
         if update_data.is_verified is not None:
-            old_values['is_verified'] = seller.is_verified
+            old_values["is_verified"] = seller.is_verified
             seller.is_verified = update_data.is_verified
             if update_data.is_verified and not seller.verified_at:
                 seller.verified_at = datetime.utcnow()
-            new_values['is_verified'] = update_data.is_verified
+            new_values["is_verified"] = update_data.is_verified
 
         self.db.commit()
 
@@ -292,11 +299,15 @@ class SellerService:
         if old_values:
             log = AdminLog(
                 admin_id=admin_id,
-                action=AdminLogAction.SELLER_TIER_CHANGED if update_data.tier else AdminLogAction.USER_UPDATED,
+                action=(
+                    AdminLogAction.SELLER_TIER_CHANGED
+                    if update_data.tier
+                    else AdminLogAction.USER_UPDATED
+                ),
                 entity_type="seller",
                 entity_id=seller.id,
                 old_values=old_values,
-                new_values=new_values
+                new_values=new_values,
             )
             self.db.add(log)
             self.db.commit()
@@ -309,17 +320,15 @@ class SellerService:
         tier: Optional[SellerTier] = None,
         is_verified: Optional[bool] = None,
         page: int = 1,
-        page_size: int = 20
+        page_size: int = 20,
     ):
         """Get public seller listings"""
-        query = self.db.query(Seller).filter(
-            Seller.status == SellerStatus.ACTIVE
-        )
+        query = self.db.query(Seller).filter(Seller.status == SellerStatus.ACTIVE)
 
         if search:
             query = query.filter(
-                Seller.store_name.ilike(f"%{search}%") |
-                Seller.store_description.ilike(f"%{search}%")
+                Seller.store_name.ilike(f"%{search}%")
+                | Seller.store_description.ilike(f"%{search}%")
             )
 
         if tier:
@@ -339,7 +348,7 @@ class SellerService:
         document_type: str,
         file_url: str,
         file_size: int,
-        mime_type: str
+        mime_type: str,
     ) -> SellerDocument:
         """Upload a seller document"""
         document = SellerDocument(
@@ -348,7 +357,7 @@ class SellerService:
             document_name=f"{document_type}_{datetime.utcnow().timestamp()}",
             file_url=file_url,
             file_size=file_size,
-            mime_type=mime_type
+            mime_type=mime_type,
         )
 
         self.db.add(document)
@@ -373,8 +382,8 @@ class ProductService:
 
     def _generate_slug(self, title: str) -> str:
         """Generate URL-friendly slug from title"""
-        slug = re.sub(r'[^\w\s-]', '', title.lower())
-        slug = re.sub(r'[\s]+', '-', slug)
+        slug = re.sub(r"[^\w\s-]", "", title.lower())
+        slug = re.sub(r"[\s]+", "-", slug)
         return slug[:200]
 
     def _ensure_unique_slug(self, slug: str, existing_id: Optional[UUID] = None) -> str:
@@ -402,7 +411,7 @@ class ProductService:
         if not seller or not seller.is_active():
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Seller account is not active"
+                detail="Seller account is not active",
             )
 
         # Generate slug
@@ -430,7 +439,9 @@ class ProductService:
             condition=product_data.condition,
             is_digital=product_data.is_digital,
             weight=product_data.weight,
-            dimensions=product_data.dimensions.dict() if product_data.dimensions else None,
+            dimensions=(
+                product_data.dimensions.dict() if product_data.dimensions else None
+            ),
             requires_shipping=product_data.requires_shipping,
             shipping_weight=product_data.shipping_weight,
             shipping_class=product_data.shipping_class,
@@ -438,7 +449,7 @@ class ProductService:
             meta_description=product_data.meta_description,
             keywords=product_data.keywords,
             attributes=product_data.attributes,
-            tags=product_data.tags
+            tags=product_data.tags,
         )
 
         self.db.add(product)
@@ -456,7 +467,7 @@ class ProductService:
                     price_adjustment=variant_data.price_adjustment,
                     stock_quantity=variant_data.stock_quantity,
                     is_active=variant_data.is_active,
-                    image_url=variant_data.image_url
+                    image_url=variant_data.image_url,
                 )
                 self.db.add(variant)
 
@@ -467,7 +478,9 @@ class ProductService:
         self.db.refresh(product)
         return product
 
-    def get_product_by_id(self, product_id: UUID, include_deleted: bool = False) -> Optional[Product]:
+    def get_product_by_id(
+        self, product_id: UUID, include_deleted: bool = False
+    ) -> Optional[Product]:
         """Get product by ID"""
         query = self.db.query(Product).filter(Product.id == product_id)
         if not include_deleted:

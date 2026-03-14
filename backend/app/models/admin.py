@@ -1,7 +1,18 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Enum as SQLEnum, JSON, Integer, Numeric
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import (
+    Column,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Text,
+    Enum as SQLEnum,
+    JSON,
+    Integer,
+    Numeric,
+)
+from app.config.database import UUID
 from sqlalchemy.orm import relationship
 import enum
 
@@ -59,7 +70,9 @@ class AdminLog(Base):
     admin_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
     action = Column(SQLEnum(AdminLogAction), nullable=False)
-    entity_type = Column(String(50), nullable=False)  # user, seller, product, order, etc.
+    entity_type = Column(
+        String(50), nullable=False
+    )  # user, seller, product, order, etc.
     entity_id = Column(UUID(as_uuid=True), nullable=False)
 
     old_values = Column(JSON, nullable=True)
@@ -84,11 +97,15 @@ class PlatformSetting(Base):
 
     key = Column(String(100), unique=True, nullable=False, index=True)
     value = Column(Text, nullable=True)
-    data_type = Column(String(20), default="string")  # string, integer, float, boolean, json
+    data_type = Column(
+        String(20), default="string"
+    )  # string, integer, float, boolean, json
 
     # Metadata
     description = Column(Text, nullable=True)
-    category = Column(String(50), default="general")  # general, payment, shipping, email, security
+    category = Column(
+        String(50), default="general"
+    )  # general, payment, shipping, email, security
     is_editable = Column(Boolean, default=True)
     is_secret = Column(Boolean, default=False)  # Mask in UI
 
@@ -107,6 +124,7 @@ class PlatformSetting(Base):
             return float(self.value) if self.value else 0.0
         elif self.data_type == "json":
             import json
+
             return json.loads(self.value) if self.value else {}
         return self.value
 
@@ -145,9 +163,13 @@ class Dispute(Base):
     dispute_number = Column(String(50), unique=True, nullable=False)
 
     order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False)
-    order_item_id = Column(UUID(as_uuid=True), ForeignKey("order_items.id"), nullable=True)
+    order_item_id = Column(
+        UUID(as_uuid=True), ForeignKey("order_items.id"), nullable=True
+    )
 
-    opened_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)  # Buyer
+    opened_by = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )  # Buyer
     seller_id = Column(UUID(as_uuid=True), ForeignKey("sellers.id"), nullable=False)
 
     status = Column(SQLEnum(DisputeStatus), default=DisputeStatus.OPEN)
@@ -155,7 +177,9 @@ class Dispute(Base):
     resolution = Column(SQLEnum(DisputeResolution), default=DisputeResolution.PENDING)
 
     # Dispute Details
-    dispute_type = Column(String(50), nullable=False)  # not_received, damaged, wrong_item, not_as_described, etc.
+    dispute_type = Column(
+        String(50), nullable=False
+    )  # not_received, damaged, wrong_item, not_as_described, etc.
     subject = Column(String(200), nullable=False)
     description = Column(Text, nullable=False)
     expected_resolution = Column(Text, nullable=True)  # What buyer wants
@@ -165,10 +189,14 @@ class Dispute(Base):
     shipping_proof = Column(JSON, nullable=True)  # Tracking, photos, etc.
 
     # Communication
-    messages = Column(JSON, default=list)  # [{sender_id, message, attachments, created_at}]
+    messages = Column(
+        JSON, default=list
+    )  # [{sender_id, message, attachments, created_at}]
 
     # Resolution
-    resolved_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  # Admin
+    resolved_by = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )  # Admin
     resolution_notes = Column(Text, nullable=True)
     resolution_amount = Column(Numeric(10, 2), nullable=True)  # Refund amount if any
     resolved_at = Column(DateTime, nullable=True)
@@ -193,7 +221,9 @@ class Coupon(Base):
     description = Column(Text, nullable=True)
 
     # Discount Type
-    discount_type = Column(String(20), nullable=False)  # percentage, fixed_amount, free_shipping
+    discount_type = Column(
+        String(20), nullable=False
+    )  # percentage, fixed_amount, free_shipping
     discount_value = Column(Numeric(10, 2), nullable=False)
     max_discount = Column(Numeric(10, 2), nullable=True)  # For percentage discounts
     min_purchase = Column(Numeric(10, 2), default=0)

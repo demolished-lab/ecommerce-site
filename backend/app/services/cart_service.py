@@ -1,427 +1,247 @@
-from datetime import datetime
-from typing import Optional, List
+from datetime import datetime, timezone, timedelta
+from typing import Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, and_, func
 from fastapi import HTTPException, status
 from uuid import UUID
-import re
+from decimal import Decimal
 
-from app.models.product import Product, ProductStatus, ProductVariant, ProductImage, Category, ProductReview
-from app.models.seller import Seller, SellerStatus
-from app.schemas.product_schema import (
-    ProductCreate, ProductUpdate, ProductVariantCreate, ProductVariantUpdate,
-    ProductReviewCreate, CategoryCreate, CategoryUpdate
-)
+from app.models.cart import Cart, CartItem
+from app.models.product import Product, ProductVariant, ProductStatus
 
 
-class ProductService:
+class CartService:
     def __init__(self, db: Session):
         self.db = db
 
-    def _generate_slug(self, title: str) -> str:
-        """Generate URL-friendly slug from title"""
-        slug = re.sub(r'[^\w\s-]', '', title.lower())
-        slug = re.sub(r'[\s]+', '-', slug)
-        return slug[:200]
+    def get_or_create_cart(self, user_id: Optional[UUID] = None, session_id: Optional[str] = None) -> Cart:
+        """Get existing cart or create a new one"""
+        cart = None
+        if user_id:
+            cart = self.db.query(Cart).filter(Cart.user_id == user_id).first()
+        elif session_id:
+            cart = self.db.query(Cart).filter(Cart.session_id == session_id).first()
 
-    def _ensure_unique_slug(self, slug: str, existing_id: Optional[UUID] = None) -> str:
-        """Ensure slug is unique by appending number if needed"""
-        base_slug = slug
-        counter = 1
-
-        query = self.db.query(Product).filter(Product.slug == slug)
-        if existing_id:
-            query = query.filter(Product.id != existing_id)
-
-        while query.first():
-            slug = f"{base_slug}-{counter}"
-            counter += 1
-            query = self.db.query(Product).filter(Product.slug == slug)
-            if existing_id:
-                query = query.filter(Product.id != existing_id)
-
-        return slug
-
-    def create_product(self, seller_id: UUID, product_data: ProductCreate) -> Product:
-        """Create a new product"""
-        # Verify seller is active
-        seller = self.db.query(Seller).filter(Seller.id == seller_id).first()
-        if not seller or not seller.is_active():
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Seller account is not active"
+        if not cart:
+            cart = Cart(
+                user_id=user_id,
+                session_id=session_id,
+                currency="USD",
+                subtotal=0,
+                tax_amount=0,
+                shipping_estimate=0,
+                total=0,
+                item_count=0,
+                unique_item_count=0,
+                coupon_discount=0,
             )
+            self.db.add(cart)
+            self.db.commit()
+            self.db.refresh(cart)
 
-        # Generate slug
-        slug = self._generate_slug(product_data.title)
-        slug = self._ensure_unique_slug(slug)
+        return cart
 
-        # Create product
-        product = Product(
-            seller_id=seller_id,
-            category_id=product_data.category_id,
-            title=product_data.title,
-            slug=slug,
-            description=product_data.description,
-            short_description=product_data.short_description,
-            price=product_data.price,
-            compare_at_price=product_data.compare_at_price,
-            cost_price=product_data.cost_price,
-            sku=product_data.sku,
-            barcode=product_data.barcode,
-            stock_quantity=product_data.stock_quantity,
-            stock_track_quantity=product_data.stock_track_quantity,
-            stock_allow_backorders=product_data.stock_allow_backorders,
-            low_stock_threshold=product_data.low_stock_threshold,
-            status=ProductStatus.DRAFT,
-            condition=product_data.condition,
-            is_digital=product_data.is_digital,
-            weight=product_data.weight,
-            dimensions=product_data.dimensions.dict() if product_data.dimensions else None,
-            requires_shipping=product_data.requires_shipping,
-            shipping_weight=product_data.shipping_weight,
-            shipping_class=product_data.shipping_class,
-            meta_title=product_data.meta_title,
-            meta_description=product_data.meta_description,
-            keywords=product_data.keywords,
-            attributes=product_data.attributes,
-            tags=product_data.tags
-        )
+    def get_cart(self, user_id: UUID) -> Cart:
+        """Get user's cart"""
+        return self.get_or_create_cart(user_id=user_id)
 
-        self.db.add(product)
-        self.db.flush()  # Flush to get product ID
-
-        # Create variants if provided
-        if product_data.variants:
-            for variant_data in product_data.variants:
-                variant = ProductVariant(
-                    product_id=product.id,
-                    variant_name=variant_data.variant_name,
-                    sku=variant_data.sku,
-                    barcode=variant_data.barcode,
-                    options=variant_data.options,
-                    price_adjustment=variant_data.price_adjustment,
-                    stock_quantity=variant_data.stock_quantity,
-                    is_active=variant_data.is_active,
-                    image_url=variant_data.image_url
-                )
-                self.db.add(variant)
-
-        # Update seller product count
-        seller.total_products += 1
-
-        self.db.commit()
-        self.db.refresh(product)
-        return product
-
-    def get_product_by_id(self, product_id: UUID, include_deleted: bool = False) -> Optional[Product]:
-        """Get product by ID"""
-        query = self.db.query(Product).filter(Product.id == product_id)
-        if not include_deleted:
-            query = query.filter(Product.deleted_at.is_(None))
-        return query.first()
-
-    def get_product_by_slug(self, slug: str) -> Optional[Product]:
-        """Get product by slug"""
-        return self.db.query(Product).filter(
-            Product.slug == slug,
-            Product.deleted_at.is_(None)
-        ).first()
-
-    def update_product(self, product_id: UUID, seller_id: UUID, update_data: ProductUpdate) -> Product:
-        """Update a product"""
-        product = self.get_product_by_id(product_id)
-        if not product:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Product not found"
-            )
-
-        if product.seller_id != seller_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to update this product"
-            )
-
-        update_dict = update_data.dict(exclude_unset=True)
-
-        # Handle slug update if title changed
-        if 'title' in update_dict:
-            new_slug = self._generate_slug(update_dict['title'])
-            new_slug = self._ensure_unique_slug(new_slug, product_id)
-            update_dict['slug'] = new_slug
-
-        for field, value in update_dict.items():
-            if field == 'dimensions' and value:
-                setattr(product, field, value.dict())
-            else:
-                setattr(product, field, value)
-
-        self.db.commit()
-        self.db.refresh(product)
-        return product
-
-    def delete_product(self, product_id: UUID, seller_id: UUID) -> bool:
-        """Soft delete a product"""
-        product = self.get_product_by_id(product_id)
-        if not product:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Product not found"
-            )
-
-        if product.seller_id != seller_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to delete this product"
-            )
-
-        product.deleted_at = datetime.utcnow()
-        product.status = ProductStatus.DISCONTINUED
-
-        # Update seller product count
-        seller = self.db.query(Seller).filter(Seller.id == seller_id).first()
-        if seller:
-            seller.total_products -= 1
-
-        self.db.commit()
-        return True
-
-    def publish_product(self, product_id: UUID, seller_id: UUID) -> Product:
-        """Publish a draft product"""
-        product = self.get_product_by_id(product_id)
-        if not product:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Product not found"
-            )
-
-        if product.seller_id != seller_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to publish this product"
-            )
-
-        if product.status not in [ProductStatus.DRAFT, ProductStatus.OUT_OF_STOCK]:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Cannot publish product with status: {product.status}"
-            )
-
-        # Check stock
-        if product.stock_quantity <= 0 and product.stock_track_quantity and not product.stock_allow_backorders:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Product is out of stock"
-            )
-
-        product.status = ProductStatus.ACTIVE
-        product.published_at = datetime.utcnow()
-
-        self.db.commit()
-        self.db.refresh(product)
-        return product
-
-    def get_products(
+    def add_item(
         self,
-        seller_id: Optional[UUID] = None,
-        category_id: Optional[UUID] = None,
-        status: Optional[ProductStatus] = None,
-        min_price: Optional[float] = None,
-        max_price: Optional[float] = None,
-        search: Optional[str] = None,
-        is_featured: Optional[bool] = None,
-        in_stock: Optional[bool] = None,
-        page: int = 1,
-        page_size: int = 20
-    ):
-        """Get products with filtering"""
-        query = self.db.query(Product).filter(Product.deleted_at.is_(None))
+        user_id: UUID,
+        product_id: UUID,
+        quantity: int = 1,
+        variant_id: Optional[UUID] = None,
+        customizations: Optional[list] = None,
+        is_gift: bool = False,
+        gift_message: Optional[str] = None,
+    ) -> Cart:
+        """Add item to cart"""
+        cart = self.get_or_create_cart(user_id=user_id)
 
-        if seller_id:
-            query = query.filter(Product.seller_id == seller_id)
-        else:
-            # Public query - only active products
-            query = query.filter(Product.status == ProductStatus.ACTIVE)
-
-        if category_id:
-            # Include subcategories
-            category = self.db.query(Category).filter(Category.id == category_id).first()
-            if category:
-                category_ids = [category_id]
-                # Get all subcategory IDs
-                def get_subcategory_ids(cat):
-                    ids = []
-                    for sub in cat.subcategories:
-                        ids.append(sub.id)
-                        ids.extend(get_subcategory_ids(sub))
-                    return ids
-
-                category_ids.extend(get_subcategory_ids(category))
-                query = query.filter(Product.category_id.in_(category_ids))
-
-        if status:
-            query = query.filter(Product.status == status)
-
-        if min_price:
-            query = query.filter(Product.price >= min_price)
-
-        if max_price:
-            query = query.filter(Product.price <= max_price)
-
-        if search:
-            query = query.filter(
-                or_(
-                    Product.title.ilike(f"%{search}%"),
-                    Product.description.ilike(f"%{search}%"),
-                    Product.sku.ilike(f"%{search}%"),
-                    Product.tags.overlap([search.lower()])
-                )
-            )
-
-        if is_featured is not None:
-            query = query.filter(Product.is_featured == is_featured)
-
-        if in_stock is not None:
-            if in_stock:
-                query = query.filter(
-                    or_(
-                        Product.stock_quantity > 0,
-                        Product.stock_allow_backorders == True,
-                        Product.stock_track_quantity == False
-                    )
-                )
-            else:
-                query = query.filter(Product.stock_quantity <= 0)
-
-        total = query.count()
-        products = query.order_by(Product.created_at.desc()).offset(
-            (page - 1) * page_size
-        ).limit(page_size).all()
-
-        return products, total
-
-    def get_featured_products(self, limit: int = 10):
-        """Get featured products"""
-        return self.db.query(Product).filter(
-            Product.is_featured == True,
+        # Verify product exists and is active
+        product = self.db.query(Product).filter(
+            Product.id == product_id,
             Product.status == ProductStatus.ACTIVE,
-            Product.deleted_at.is_(None)
-        ).order_by(func.random()).limit(limit).all()
-
-    def create_category(self, category_data: CategoryCreate) -> Category:
-        """Create a new category"""
-        slug = self._generate_slug(category_data.name)
-
-        # Check if slug exists
-        existing = self.db.query(Category).filter(Category.slug == slug).first()
-        if existing:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Category with this name already exists"
-            )
-
-        category = Category(
-            parent_id=category_data.parent_id,
-            name=category_data.name,
-            slug=slug,
-            description=category_data.description,
-            icon=category_data.icon,
-            sort_order=category_data.sort_order,
-            attributes_schema=category_data.attributes_schema
-        )
-
-        self.db.add(category)
-        self.db.commit()
-        self.db.refresh(category)
-        return category
-
-    def get_categories(self, parent_id: Optional[UUID] = None, active_only: bool = True):
-        """Get categories"""
-        query = self.db.query(Category)
-
-        if active_only:
-            query = query.filter(Category.is_active == True)
-
-        if parent_id:
-            query = query.filter(Category.parent_id == parent_id)
-        else:
-            query = query.filter(Category.parent_id.is_(None))
-
-        return query.order_by(Category.sort_order).all()
-
-    def get_category_tree(self):
-        """Get full category tree"""
-        return self.get_categories(parent_id=None)
-
-    def add_product_review(self, product_id: UUID, user_id: UUID, review_data: ProductReviewCreate) -> ProductReview:
-        """Add a product review"""
-        product = self.get_product_by_id(product_id)
-        if not product:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Product not found"
-            )
-
-        review = ProductReview(
-            product_id=product_id,
-            user_id=user_id,
-            order_id=review_data.order_id,
-            rating=review_data.rating,
-            title=review_data.title,
-            review_text=review_data.review_text,
-            value_for_money=review_data.value_for_money,
-            quality=review_data.quality,
-            shipping=review_data.shipping,
-            images=review_data.images or [],
-            is_verified_purchase=review_data.order_id is not None
-        )
-
-        self.db.add(review)
-
-        # Update product rating
-        self._update_product_rating(product_id)
-
-        self.db.commit()
-        self.db.refresh(review)
-        return review
-
-    def _update_product_rating(self, product_id: UUID):
-        """Update product average rating"""
-        result = self.db.query(
-            func.avg(ProductReview.rating).label('avg_rating'),
-            func.count(ProductReview.id).label('review_count')
-        ).filter(
-            ProductReview.product_id == product_id,
-            ProductReview.is_approved == True
+            Product.deleted_at.is_(None),
         ).first()
+        if not product:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found or unavailable")
 
-        product = self.get_product_by_id(product_id)
-        if product:
-            product.average_rating = float(result.avg_rating or 0)
-            product.review_count = result.review_count
-
-    def update_stock(self, product_id: UUID, quantity_change: int, variant_id: Optional[UUID] = None) -> bool:
-        """Update product stock"""
+        # Get price
+        unit_price = product.price
+        variant_name = None
         if variant_id:
             variant = self.db.query(ProductVariant).filter(
                 ProductVariant.id == variant_id,
-                ProductVariant.product_id == product_id
+                ProductVariant.product_id == product_id,
+                ProductVariant.is_active == True,
             ).first()
-            if variant:
-                variant.stock_quantity += quantity_change
-                if variant.stock_quantity < 0:
-                    variant.stock_quantity = 0
+            if not variant:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product variant not found")
+            unit_price += variant.price_adjustment
+            variant_name = variant.variant_name
+
+        # Check if item already in cart
+        existing = self.db.query(CartItem).filter(
+            CartItem.cart_id == cart.id,
+            CartItem.product_id == product_id,
+            CartItem.variant_id == variant_id,
+            CartItem.saved_for_later == False,
+        ).first()
+
+        if existing:
+            existing.quantity += quantity
+            if existing.quantity > 99:
+                existing.quantity = 99
+            existing.total_price = existing.unit_price * existing.quantity
         else:
-            product = self.get_product_by_id(product_id)
-            if product:
-                product.stock_quantity += quantity_change
-                if product.stock_quantity < 0:
-                    product.stock_quantity = 0
+            # Get primary image
+            primary_image = None
+            if product.images:
+                primary = next((img for img in product.images if img.is_primary), None)
+                primary_image = primary.image_url if primary else (product.images[0].image_url if product.images else None)
 
-                # Update status based on stock
-                if product.stock_quantity == 0 and product.stock_track_quantity:
-                    product.status = ProductStatus.OUT_OF_STOCK
+            item = CartItem(
+                cart_id=cart.id,
+                product_id=product_id,
+                variant_id=variant_id,
+                quantity=quantity,
+                unit_price=unit_price,
+                original_price=product.compare_at_price,
+                total_price=unit_price * quantity,
+                product_name=product.title,
+                product_image=primary_image,
+                variant_name=variant_name,
+                customizations=customizations,
+                is_gift=is_gift,
+                gift_message=gift_message,
+                max_quantity=min(product.stock_quantity, 99) if product.stock_quantity else 99,
+            )
+            self.db.add(item)
 
+        self._recalculate_cart(cart)
         self.db.commit()
-        return True
+        self.db.refresh(cart)
+        return cart
+
+    def update_item(self, user_id: UUID, item_id: UUID, quantity: int) -> Cart:
+        """Update cart item quantity"""
+        cart = self.get_or_create_cart(user_id=user_id)
+        item = self.db.query(CartItem).filter(
+            CartItem.id == item_id,
+            CartItem.cart_id == cart.id,
+        ).first()
+
+        if not item:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cart item not found")
+
+        if quantity <= 0:
+            self.db.delete(item)
+        else:
+            item.quantity = min(quantity, 99)
+            item.total_price = item.unit_price * item.quantity
+
+        self._recalculate_cart(cart)
+        self.db.commit()
+        self.db.refresh(cart)
+        return cart
+
+    def remove_item(self, user_id: UUID, item_id: UUID) -> Cart:
+        """Remove item from cart"""
+        cart = self.get_or_create_cart(user_id=user_id)
+        item = self.db.query(CartItem).filter(
+            CartItem.id == item_id,
+            CartItem.cart_id == cart.id,
+        ).first()
+
+        if not item:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cart item not found")
+
+        self.db.delete(item)
+        self._recalculate_cart(cart)
+        self.db.commit()
+        self.db.refresh(cart)
+        return cart
+
+    def clear_cart(self, user_id: UUID) -> None:
+        """Clear all items from cart"""
+        cart = self.get_or_create_cart(user_id=user_id)
+        self.db.query(CartItem).filter(CartItem.cart_id == cart.id).delete()
+        cart.subtotal = 0
+        cart.tax_amount = 0
+        cart.total = 0
+        cart.item_count = 0
+        cart.unique_item_count = 0
+        cart.coupon_code = None
+        cart.coupon_discount = 0
+        self.db.commit()
+
+    def apply_coupon(self, user_id: UUID, coupon_code: str) -> dict:
+        """Apply coupon to cart"""
+        from app.models.admin import Coupon
+
+        cart = self.get_or_create_cart(user_id=user_id)
+        coupon = self.db.query(Coupon).filter(
+            Coupon.code == coupon_code,
+            Coupon.is_active == True,
+        ).first()
+
+        if not coupon or not coupon.is_valid():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired coupon code")
+
+        if cart.subtotal < float(coupon.min_purchase or 0):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Minimum purchase of ${coupon.min_purchase} required",
+            )
+
+        discount = Decimal("0")
+        if coupon.discount_type == "percentage":
+            discount = cart.subtotal * coupon.discount_value / 100
+            if coupon.max_discount:
+                discount = min(discount, coupon.max_discount)
+        elif coupon.discount_type == "fixed_amount":
+            discount = coupon.discount_value
+
+        cart.coupon_code = coupon_code
+        cart.coupon_discount = discount
+        self._recalculate_cart(cart)
+        self.db.commit()
+        self.db.refresh(cart)
+
+        return {
+            "success": True,
+            "message": "Coupon applied successfully",
+            "coupon_code": coupon_code,
+            "discount_amount": discount,
+            "new_total": cart.total,
+        }
+
+    def remove_coupon(self, user_id: UUID) -> Cart:
+        """Remove coupon from cart"""
+        cart = self.get_or_create_cart(user_id=user_id)
+        cart.coupon_code = None
+        cart.coupon_discount = 0
+        self._recalculate_cart(cart)
+        self.db.commit()
+        self.db.refresh(cart)
+        return cart
+
+    def _recalculate_cart(self, cart: Cart) -> None:
+        """Recalculate cart totals"""
+        items = self.db.query(CartItem).filter(
+            CartItem.cart_id == cart.id,
+            CartItem.saved_for_later == False,
+        ).all()
+
+        subtotal = sum(item.total_price for item in items)
+        item_count = sum(item.quantity for item in items)
+        unique_count = len(items)
+
+        cart.subtotal = subtotal
+        cart.item_count = item_count
+        cart.unique_item_count = unique_count
+        cart.tax_amount = subtotal * Decimal("0.08")  # 8% tax estimate
+        cart.total = subtotal + cart.tax_amount + (cart.shipping_estimate or 0) - (cart.coupon_discount or 0)
+        if cart.total < 0:
+            cart.total = 0
+        cart.touch()

@@ -12,7 +12,7 @@ security = HTTPBearer()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> User:
     """
     Dependency to get the current authenticated user from JWT token.
@@ -58,7 +58,7 @@ async def get_current_user(
 
 async def get_current_user_optional(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Optional[User]:
     """
     Get current user if authenticated, return None otherwise.
@@ -78,15 +78,15 @@ def require_role(required_role: UserRole):
     Factory function to create a dependency that requires a specific role.
     Usage: Depends(require_role(UserRole.ADMIN))
     """
-    async def role_checker(
-        current_user: User = Depends(get_current_user)
-    ) -> User:
+
+    async def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role != required_role and current_user.role != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"This action requires {required_role.value} role",
             )
         return current_user
+
     return role_checker
 
 
@@ -95,21 +95,20 @@ def require_any_role(*roles: UserRole):
     Factory function to create a dependency that requires any of the specified roles.
     Usage: Depends(require_any_role(UserRole.SELLER, UserRole.ADMIN))
     """
-    async def role_checker(
-        current_user: User = Depends(get_current_user)
-    ) -> User:
+
+    async def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in roles and current_user.role != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"This action requires one of the following roles: {[r.value for r in roles]}",
             )
         return current_user
+
     return role_checker
 
 
 def require_seller_approved(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> User:
     """
     Dependency to ensure user is an approved seller.
@@ -121,6 +120,7 @@ def require_seller_approved(
         )
 
     from app.models.seller import SellerStatus
+
     if current_user.seller_profile.status != SellerStatus.ACTIVE:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -135,9 +135,16 @@ class AuthMiddleware:
     Middleware to handle authentication on all routes.
     Can be configured to skip certain paths.
     """
+
     def __init__(self, app, skip_paths: list = None):
         self.app = app
-        self.skip_paths = skip_paths or ["/health", "/docs", "/openapi.json", "/auth/login", "/auth/register"]
+        self.skip_paths = skip_paths or [
+            "/health",
+            "/docs",
+            "/openapi.json",
+            "/auth/login",
+            "/auth/register",
+        ]
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":

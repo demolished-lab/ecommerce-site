@@ -1,21 +1,21 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { FormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { AuthService } from '../../services/auth.service';
-import { CartService } from '../../services/cart.service';
-import { User } from '../../models/user.model';
+import { Component } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { RouterModule, Router } from "@angular/router";
+import { MatToolbarModule } from "@angular/material/toolbar";
+import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
+import { MatBadgeModule } from "@angular/material/badge";
+import { MatMenuModule } from "@angular/material/menu";
+import { MatInputModule } from "@angular/material/input";
+import { MatFormFieldModule } from "@angular/material/form-field";
+import { FormsModule } from "@angular/forms";
+import { Observable } from "rxjs";
+import { AuthService } from "../../../services/auth.service";
+import { CartService } from "../../../services/cart.service";
+import { User } from "../../../models/user.model";
 
 @Component({
-  selector: 'app-header',
+  selector: "app-header",
   standalone: true,
   imports: [
     CommonModule,
@@ -27,7 +27,7 @@ import { User } from '../../models/user.model';
     MatMenuModule,
     MatInputModule,
     MatFormFieldModule,
-    FormsModule
+    FormsModule,
   ],
   template: `
     <mat-toolbar class="header-toolbar" color="primary">
@@ -38,12 +38,14 @@ import { User } from '../../models/user.model';
 
       <!-- Search Bar -->
       <div class="search-container">
-        <mat-form-field appearance="outline" class="search-field">
-          <input matInput
-                 type="text"
-                 [(ngModel)]="searchQuery"
-                 (keyup.enter)="onSearch()"
-                 placeholder="Search products...">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-field">
+          <input
+            matInput
+            type="text"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="onSearch()"
+            placeholder="Search products..."
+          />
           <button mat-icon-button matSuffix (click)="onSearch()">
             <mat-icon>search</mat-icon>
           </button>
@@ -60,7 +62,12 @@ import { User } from '../../models/user.model';
       </nav>
 
       <!-- Cart Button -->
-      <a mat-icon-button routerLink="/cart" [matBadge]="cartCount" matBadgeColor="accent">
+      <a
+        mat-icon-button
+        routerLink="/cart"
+        [matBadge]="cartCount"
+        matBadgeColor="accent"
+      >
         <mat-icon>shopping_cart</mat-icon>
       </a>
 
@@ -142,75 +149,92 @@ import { User } from '../../models/user.model';
       </ng-template>
     </mat-toolbar>
   `,
-  styles: [`
-    .header-toolbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-    }
+  styles: [
+    `
+      .header-toolbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+      }
 
-    .logo-link {
-      text-decoration: none;
-      color: inherit;
-    }
+      .logo-link {
+        text-decoration: none;
+        color: inherit;
+      }
 
-    .logo-text {
-      font-size: 24px;
-      font-weight: bold;
-    }
+      .logo-text {
+        font-size: 24px;
+        font-weight: bold;
+      }
 
-    .search-container {
-      flex: 1;
-      max-width: 600px;
-      margin: 0 24px;
-    }
+      .search-container {
+        flex: 1;
+        max-width: 600px;
+        margin: 0 24px;
+      }
 
-    .search-field {
-      width: 100%;
-    }
+      .search-field {
+        width: 100%;
+      }
 
-    ::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper {
-      display: none;
-    }
+      ::ng-deep .search-field .mat-mdc-text-field-wrapper {
+        background-color: white;
+        border-radius: 4px;
+        padding-right: 0;
+      }
+      
+      ::ng-deep .search-field .mat-mdc-form-field-flex {
+        height: 40px;
+        align-items: center;
+      }
+      
+      ::ng-deep .search-field .mat-mdc-form-field-infix {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        min-height: 40px;
+      }
 
-    .spacer {
-      flex: 1;
-    }
 
-    .nav-links {
-      display: flex;
-      gap: 8px;
-      margin-right: 16px;
-    }
+      .spacer {
+        flex: 1;
+      }
 
-    .user-name {
-      margin-left: 8px;
-    }
+      .nav-links {
+        display: flex;
+        gap: 8px;
+        margin-right: 16px;
+      }
 
-    ::ng-deep .mat-mdc-menu-item-text {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-  `]
+      .user-name {
+        margin-left: 8px;
+      }
+
+      ::ng-deep .mat-mdc-menu-item-text {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+    `,
+  ],
 })
 export class HeaderComponent {
-  searchQuery = '';
+  searchQuery = "";
   currentUser$: Observable<User | null>;
   cartCount = 0;
 
   constructor(
     private authService: AuthService,
-    private cartService: CartService
+    private cartService: CartService,
+    private router: Router
   ) {
     this.currentUser$ = this.authService.currentUser$;
-    this.cartService.cart$.subscribe(cart => {
+    this.cartService.cart$.subscribe((cart) => {
       this.cartCount = cart?.item_count || 0;
     });
   }
@@ -225,7 +249,7 @@ export class HeaderComponent {
 
   onSearch(): void {
     if (this.searchQuery.trim()) {
-      // Navigate to search with query
+      this.router.navigate(['/search'], { queryParams: { q: this.searchQuery } });
     }
   }
 

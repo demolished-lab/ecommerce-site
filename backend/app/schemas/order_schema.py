@@ -73,6 +73,7 @@ class PaymentCreate(BaseModel):
 
 class PaymentIntentResponse(BaseModel):
     """For payment providers that require client-side confirmation"""
+
     client_secret: str
     publishable_key: str
     payment_intent_id: str
@@ -99,7 +100,7 @@ class OrderStatusHistoryResponse(BaseModel):
     from_status: Optional[OrderStatus]
     to_status: OrderStatus
     reason: Optional[str]
-    metadata: Optional[Dict[str, Any]]
+    context: Optional[Dict[str, Any]] = None
     created_at: datetime
     changed_by: Optional[UUID]
 
@@ -122,7 +123,7 @@ class ShippingAddress(BaseModel):
 
 # ============== Order Create ==============
 class OrderCreate(BaseModel):
-    shipping_address_id: UUID
+    shipping_address_id: Optional[UUID] = None
     shipping_method: Optional[str] = None
     customer_notes: Optional[str] = None
     is_gift: bool = False
@@ -139,6 +140,7 @@ class OrderCreate(BaseModel):
 
 class OrderCreateGuest(BaseModel):
     """Order creation for guest checkout"""
+
     email: str
     shipping_address: ShippingAddress
     shipping_method: Optional[str] = None
@@ -153,6 +155,7 @@ class OrderCreateGuest(BaseModel):
 # ============== Order Response ==============
 class OrderSummaryResponse(BaseModel):
     """Minimal order info for lists"""
+
     id: UUID
     order_number: str
     status: OrderStatus
@@ -170,11 +173,11 @@ class OrderDetailResponse(BaseModel):
     order_number: str
 
     status: OrderStatus
-    status_display: str
+    status_display: Optional[str] = None
 
     user_id: UUID
     seller_id: UUID
-    seller_name: str
+    seller_name: Optional[str] = None
 
     subtotal: Decimal
     shipping_cost: Decimal
@@ -185,33 +188,36 @@ class OrderDetailResponse(BaseModel):
     currency: str
 
     items: List[OrderItemResponse]
-    payments: List[PaymentResponse]
-    status_history: List[OrderStatusHistoryResponse]
+    payments: List[PaymentResponse] = []
+    status_history: List[OrderStatusHistoryResponse] = []
 
-    shipping_address: Dict[str, Any]
-    shipping_method: Optional[str]
-    shipping_carrier: Optional[str]
-    tracking_number: Optional[str]
-    tracking_url: Optional[str]
-    shipped_at: Optional[datetime]
-    estimated_delivery: Optional[datetime]
-    delivered_at: Optional[datetime]
+    shipping_address: Optional[Dict[str, Any]] = None
+    shipping_method: Optional[str] = None
+    shipping_carrier: Optional[str] = None
+    tracking_number: Optional[str] = None
+    tracking_url: Optional[str] = None
+    shipped_at: Optional[datetime] = None
+    estimated_delivery: Optional[datetime] = None
+    delivered_at: Optional[datetime] = None
 
-    customer_notes: Optional[str]
-    seller_notes: Optional[str]
-    is_gift: bool
-    gift_message: Optional[str]
-    gift_wrap: bool
+    customer_notes: Optional[str] = None
+    seller_notes: Optional[str] = None
+    is_gift: bool = False
+    gift_message: Optional[str] = None
+    gift_wrap: bool = False
 
     created_at: datetime
     updated_at: datetime
-    cancelled_at: Optional[datetime]
-    cancel_reason: Optional[str]
-    completed_at: Optional[datetime]
+    cancelled_at: Optional[datetime] = None
+    cancel_reason: Optional[str] = None
+    completed_at: Optional[datetime] = None
 
-    can_cancel: bool
-    can_refund: bool
-    can_track: bool
+    can_cancel: bool = False
+    can_refund: bool = False
+    can_track: bool = False
+
+    class Config:
+        from_attributes = True
 
     class Config:
         from_attributes = True
@@ -224,7 +230,7 @@ class OrderStatusUpdate(BaseModel):
     tracking_number: Optional[str] = None
     shipping_carrier: Optional[str] = None
 
-    @validator('status')
+    @validator("status")
     def validate_status_transition(cls, v, values):
         # Could add validation for valid transitions
         return v
@@ -248,6 +254,7 @@ class OrderFilters(BaseModel):
 
 class SellerOrderFilters(OrderFilters):
     """Additional filters for seller orders"""
+
     payment_status: Optional[PaymentStatus] = None
 
 

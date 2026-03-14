@@ -5,8 +5,8 @@ export interface User {
   last_name: string;
   phone?: string;
   avatar_url?: string;
-  role: 'buyer' | 'seller' | 'admin';
-  status: 'active' | 'inactive' | 'suspended' | 'pending_verification';
+  role: "buyer" | "seller" | "admin";
+  status: "active" | "inactive" | "suspended" | "pending_verification";
   email_verified: boolean;
   last_login_at?: string;
   created_at: string;
@@ -15,7 +15,7 @@ export interface User {
 export interface UserAddress {
   id: string;
   user_id: string;
-  address_type: 'home' | 'work' | 'other';
+  address_type: "home" | "work" | "other";
   is_default: boolean;
   street_address: string;
   apartment?: string;

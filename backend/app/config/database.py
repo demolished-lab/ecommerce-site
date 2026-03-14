@@ -1,10 +1,39 @@
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, CHAR
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.types import TypeDecorator
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from contextlib import contextmanager
 import logging
 
 from app.config.settings import settings
+
+class GUID(TypeDecorator):
+    impl = CHAR
+    cache_ok = True
+
+    def __init__(self, as_uuid=False, *args, **kwargs):
+        self.as_uuid = as_uuid
+        super().__init__(*args, **kwargs)
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PG_UUID(as_uuid=self.as_uuid))
+        return dialect.type_descriptor(CHAR(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if dialect.name == 'postgresql':
+            return str(value)
+        if not isinstance(value, str):
+            return str(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        return value
+
+UUID = GUID
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +44,7 @@ engine = create_engine(
     max_overflow=30,
     pool_pre_ping=True,
     pool_recycle=3600,
-    echo=settings.DEBUG
+    echo=settings.DEBUG,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -25,7 +54,8 @@ Base = declarative_base()
 # Enable PostgreSQL uuid-ossp extension
 @event.listens_for(Base.metadata, "before_create")
 def receive_before_create(target, connection, **kw):
-    connection.execute("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
+    if connection.dialect.name == "postgresql":
+        connection.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
 
 
 def get_db():

@@ -1,7 +1,16 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Enum as SQLEnum, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import (
+    Column,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Text,
+    Enum as SQLEnum,
+    JSON,
+)
+from app.config.database import UUID
 from sqlalchemy.orm import relationship
 import enum
 
@@ -58,7 +67,9 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    )
 
     type = Column(SQLEnum(NotificationType), nullable=False)
     channel = Column(SQLEnum(NotificationChannel), default=NotificationChannel.IN_APP)
@@ -112,7 +123,9 @@ class UserNotificationPreference(Base):
     __tablename__ = "user_notification_preferences"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True
+    )
 
     # Channel preferences
     email_enabled = Column(Boolean, default=True)

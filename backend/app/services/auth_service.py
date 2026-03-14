@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
@@ -19,11 +19,13 @@ class AuthService:
     def register_user(self, user_data: UserCreate) -> Tuple[User, str, str]:
         """Register a new user"""
         # Check if email already exists
-        existing_user = self.db.query(User).filter(User.email == user_data.email).first()
+        existing_user = (
+            self.db.query(User).filter(User.email == user_data.email).first()
+        )
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
+                detail="Email already registered",
             )
 
         # Create new user
@@ -34,7 +36,7 @@ class AuthService:
             last_name=user_data.last_name,
             phone=user_data.phone,
             role=UserRole.BUYER,
-            status=UserStatus.ACTIVE
+            status=UserStatus.ACTIVE,
         )
 
         self.db.add(user)
@@ -42,11 +44,7 @@ class AuthService:
         self.db.refresh(user)
 
         # Create tokens
-        token_data = {
-            "sub": str(user.id),
-            "email": user.email,
-            "role": user.role.value
-        }
+        token_data = {"sub": str(user.id), "email": user.email, "role": user.role.value}
         access_token = create_access_token(token_data)
         refresh_token = create_refresh_token(token_data)
 
@@ -59,21 +57,20 @@ class AuthService:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
+                detail="Invalid email or password",
             )
 
         # Check if user is locked
-        if user.locked_until and user.locked_until > datetime.utcnow():
+        if user.locked_until and user.locked_until > datetime.now(timezone.utc):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Account locked. Try again after {user.locked_until}"
+                detail=f"Account locked. Try again after {user.locked_until}",
             )
 
         # Check if user is active
         if user.status != UserStatus.ACTIVE:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Account is not active"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is not active"
             )
 
         # Verify password
@@ -83,32 +80,28 @@ class AuthService:
 
             # Lock account after 5 failed attempts
             if user.login_attempts >= 5:
-                user.locked_until = datetime.utcnow() + timedelta(minutes=30)
+                user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=30)
                 self.db.commit()
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Account locked for 30 minutes due to multiple failed login attempts"
+                    detail="Account locked for 30 minutes due to multiple failed login attempts",
                 )
 
             self.db.commit()
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
+                detail="Invalid email or password",
             )
 
         # Successful login - reset attempts
         user.login_attempts = 0
         user.locked_until = None
-        user.last_login_at = datetime.utcnow()
+        user.last_login_at = datetime.now(timezone.utc)
         self.db.commit()
 
         # Create tokens
         expires = timedelta(days=30) if login_data.remember_me else None
-        token_data = {
-            "sub": str(user.id),
-            "email": user.email,
-            "role": user.role.value
-        }
+        token_data = {"sub": str(user.id), "email": user.email, "role": user.role.value}
 
         access_token = create_access_token(token_data, expires)
         refresh_token = create_refresh_token(token_data)
@@ -128,15 +121,14 @@ class AuthService:
         user = self.get_user_by_id(user_id)
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
 
         # Verify current password
         if not verify_password(password_data.current_password, user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Current password is incorrect"
+                detail="Current password is incorrect",
             )
 
         # Update password
@@ -167,11 +159,10 @@ class AuthService:
         user = self.get_user_by_id(user_id)
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
 
-        update_dict = update_data.dict(exclude_unset=True)
+        update_dict = update_data.model_dump(exclude_unset=True)
         for field, value in update_dict.items():
             setattr(user, field, value)
 
@@ -184,14 +175,18 @@ class AuthService:
         # In production: add token to blacklist
         return True
 
-    def admin_create_user(self, user_data: UserCreate, role: UserRole, admin_id: UUID) -> User:
+    def admin_create_user(
+        self, user_data: UserCreate, role: UserRole, admin_id: UUID
+    ) -> User:
         """Admin creates a user with specific role"""
         # Check if email exists
-        existing_user = self.db.query(User).filter(User.email == user_data.email).first()
+        existing_user = (
+            self.db.query(User).filter(User.email == user_data.email).first()
+        )
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
+                detail="Email already registered",
             )
 
         user = User(
@@ -202,7 +197,7 @@ class AuthService:
             phone=user_data.phone,
             role=role,
             status=UserStatus.ACTIVE,
-            email_verified=True
+            email_verified=True,
         )
 
         self.db.add(user)
@@ -215,20 +210,21 @@ class AuthService:
             action=AdminLogAction.USER_CREATED,
             entity_type="user",
             entity_id=user.id,
-            new_values={"email": user.email, "role": role.value}
+            new_values={"email": user.email, "role": role.value},
         )
         self.db.add(log)
         self.db.commit()
 
         return user
 
-    def admin_update_user_status(self, user_id: UUID, new_status: UserStatus, admin_id: UUID) -> User:
+    def admin_update_user_status(
+        self, user_id: UUID, new_status: UserStatus, admin_id: UUID
+    ) -> User:
         """Admin updates user status"""
         user = self.get_user_by_id(user_id)
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
 
         old_status = user.status
@@ -250,7 +246,7 @@ class AuthService:
             entity_type="user",
             entity_id=user.id,
             old_values={"status": old_status.value},
-            new_values={"status": new_status.value}
+            new_values={"status": new_status.value},
         )
         self.db.add(log)
         self.db.commit()

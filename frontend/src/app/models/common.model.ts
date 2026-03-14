@@ -26,7 +26,7 @@ export interface FilterParams {
   page?: number;
   page_size?: number;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: "asc" | "desc";
   search?: string;
 }
 
@@ -41,7 +41,7 @@ export interface DashboardMetric {
 
 export interface Notification {
   id: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: "info" | "success" | "warning" | "error";
   title: string;
   message: string;
   action_url?: string;

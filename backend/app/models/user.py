@@ -1,7 +1,16 @@
 import uuid
-from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Enum as SQLEnum, Integer
-from sqlalchemy.dialects.postgresql import UUID
+from datetime import datetime, timezone
+from sqlalchemy import (
+    Column,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Text,
+    Enum as SQLEnum,
+    Integer,
+)
+from app.config.database import UUID
 from sqlalchemy.orm import relationship
 import enum
 
@@ -44,13 +53,19 @@ class User(Base):
     login_attempts = Column(Integer, default=0)
     locked_until = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     deleted_at = Column(DateTime, nullable=True)
 
     # Relationships
-    addresses = relationship("UserAddress", back_populates="user", cascade="all, delete-orphan")
-    seller_profile = relationship("Seller", back_populates="user", uselist=False)
+    addresses = relationship(
+        "UserAddress", back_populates="user", cascade="all, delete-orphan"
+    )
+    seller_profile = relationship("Seller", back_populates="user", uselist=False, foreign_keys="Seller.user_id")
     cart = relationship("Cart", back_populates="user", uselist=False)
     orders = relationship("Order", back_populates="user")
     notifications = relationship("Notification", back_populates="user")
@@ -97,8 +112,12 @@ class UserAddress(Base):
     phone = Column(String(20), nullable=True)
     delivery_instructions = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     # Relationships
     user = relationship("User", back_populates="addresses")

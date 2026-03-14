@@ -41,7 +41,7 @@ class CategoryResponse(CategoryBase):
     level: int
     is_active: bool
     is_featured: bool
-    subcategories: List['CategoryResponse'] = []
+    subcategories: List["CategoryResponse"] = []
     created_at: datetime
     updated_at: datetime
 
@@ -50,7 +50,7 @@ class CategoryResponse(CategoryBase):
 
 
 class CategoryTreeResponse(CategoryResponse):
-    subcategories: List['CategoryTreeResponse'] = []
+    subcategories: List["CategoryTreeResponse"] = []
 
 
 # ============== Product Image Schemas ==============

@@ -1,20 +1,40 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
-import { Cart, CartItem, CartAddItem, CartUpdateItem, CouponResponse } from '../models/cart.model';
-import { environment } from '../../environments/environment';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { BehaviorSubject, Observable, of } from "rxjs";
+import { map, tap } from "rxjs/operators";
+import {
+  Cart,
+  CartItem,
+  CartAddItem,
+  CartUpdateItem,
+  CouponResponse,
+} from "../models/cart.model";
+import { environment } from "../../environments/environment";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class CartService {
-  private apiUrl = `${environment.apiUrl}/cart`;
   private cartSubject: BehaviorSubject<Cart | null> = new BehaviorSubject<Cart | null>(null);
   public cart$ = this.cartSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    this.loadCart();
+  private mockCart: Cart = {
+    id: 'guest-cart-1',
+    user_id: undefined,
+    session_id: 'sess-1',
+    currency: 'USD',
+    coupon_discount: 0,
+    items: [],
+    subtotal: 0,
+    tax_amount: 0,
+    shipping_estimate: 0,
+    total: 0,
+    item_count: 0,
+    unique_item_count: 0
+  };
+
+  constructor() {
+    this.cartSubject.next(this.mockCart);
   }
 
   get cart(): Cart | null {
@@ -29,102 +49,100 @@ export class CartService {
     return this.cart?.total || 0;
   }
 
-  loadCart(): void {
-    this.http.get<{ success: boolean; data: Cart }>(this.apiUrl).subscribe({
-      next: (response) => {
-        this.cartSubject.next(response.data);
-      },
-      error: () => {
-        this.cartSubject.next(null);
-      }
+  private recalculateCart() {
+    let subtotal = 0;
+    let count = 0;
+    
+    this.mockCart.items.forEach(item => {
+      subtotal += item.total_price;
+      count += item.quantity;
     });
+
+    this.mockCart.subtotal = subtotal;
+    this.mockCart.tax_amount = subtotal * 0.08; // 8% mock tax
+    this.mockCart.shipping_estimate = subtotal > 0 ? 15.00 : 0; // Flat $15 shipping
+    this.mockCart.total = this.mockCart.subtotal + this.mockCart.tax_amount + this.mockCart.shipping_estimate;
+    this.mockCart.item_count = count;
+    this.mockCart.unique_item_count = this.mockCart.items.length;
+
+    this.cartSubject.next({...this.mockCart});
+  }
+
+  loadCart(): void {
+    this.cartSubject.next(this.mockCart);
   }
 
   getCart(): Observable<Cart> {
-    return this.http.get<{ success: boolean; data: Cart }>(this.apiUrl).pipe(
-      map(response => response.data),
-      tap(cart => this.cartSubject.next(cart))
-    );
+    return of(this.mockCart);
   }
 
   addItem(item: CartAddItem): Observable<Cart> {
-    return this.http.post<{ success: boolean; data: Cart }>(`${this.apiUrl}/add`, item).pipe(
-      map(response => response.data),
-      tap(cart => this.cartSubject.next(cart))
-    );
+    const existingItem = this.mockCart.items.find(i => i.product_id === item.product_id);
+    
+    if (existingItem) {
+      existingItem.quantity += item.quantity;
+      existingItem.total_price = existingItem.quantity * existingItem.unit_price;
+    } else {
+      // Mock lookup a price based on id for demo purposes
+      const mockPrice = 45.00; // default mock price
+      this.mockCart.items.push({
+        id: Math.random().toString(36).substring(7),
+        product_id: item.product_id,
+        variant_id: item.variant_id,
+        quantity: item.quantity,
+        max_quantity: 10,
+        unit_price: mockPrice,
+        total_price: mockPrice * item.quantity,
+        product_name: "Mock Product",
+        is_gift: false,
+        is_available: true
+      });
+    }
+
+    this.recalculateCart();
+    return of(this.mockCart);
   }
 
   updateItem(itemId: string, quantity: number): Observable<Cart> {
-    return this.http.put<{ success: boolean; data: Cart }>(
-      `${this.apiUrl}/update`,
-      { item_id: itemId, quantity }
-    ).pipe(
-      map(response => response.data),
-      tap(cart => this.cartSubject.next(cart))
-    );
+    const existingItem = this.mockCart.items.find(i => i.id === itemId);
+    if (existingItem) {
+      existingItem.quantity = quantity;
+      existingItem.total_price = existingItem.quantity * existingItem.unit_price;
+      this.recalculateCart();
+    }
+    return of(this.mockCart);
   }
 
   removeItem(itemId: string): Observable<Cart> {
-    return this.http.delete<{ success: boolean; data: Cart }>(
-      `${this.apiUrl}/remove`,
-      { body: { item_id: itemId } }
-    ).pipe(
-      map(response => response.data),
-      tap(cart => this.cartSubject.next(cart))
-    );
+    this.mockCart.items = this.mockCart.items.filter(i => i.id !== itemId);
+    this.recalculateCart();
+    return of(this.mockCart);
   }
 
   clearCart(): Observable<void> {
-    return this.http.delete(`${this.apiUrl}/clear`).pipe(
-      tap(() => this.cartSubject.next(null)),
-      map(() => void 0)
-    );
+    this.mockCart.items = [];
+    this.recalculateCart();
+    return of(void 0);
   }
 
   applyCoupon(couponCode: string): Observable<CouponResponse> {
-    return this.http.post<{ success: boolean; data: CouponResponse }>(
-      `${this.apiUrl}/coupon`,
-      { coupon_code: couponCode }
-    ).pipe(
-      map(response => response.data),
-      tap(() => this.loadCart())
-    );
+    // Mock coupon logic
+    return of({ success: true, message: 'Coupon applied!', coupon_code: couponCode, discount_amount: 10, new_total: this.mockCart.total - 10 });
   }
 
   removeCoupon(): Observable<void> {
-    return this.http.delete(`${this.apiUrl}/coupon`).pipe(
-      tap(() => this.loadCart()),
-      map(() => void 0)
-    );
+    return of(void 0);
   }
 
   updateShippingEstimate(country: string, postalCode?: string): Observable<Cart> {
-    return this.http.post<{ success: boolean; data: Cart }>(
-      `${this.apiUrl}/shipping-estimate`,
-      { country, postal_code: postalCode }
-    ).pipe(
-      map(response => response.data),
-      tap(cart => this.cartSubject.next(cart))
-    );
+    return of(this.mockCart);
   }
 
   validateCart(): Observable<{ is_valid: boolean; errors: any[] }> {
-    return this.http.get<{ success: boolean; data: { is_valid: boolean; errors: any[] } }>(
-      `${this.apiUrl}/validate`
-    ).pipe(map(response => response.data));
+    return of({ is_valid: true, errors: [] });
   }
 
-  // Guest cart handling
   mergeGuestCart(sessionId: string): Observable<Cart> {
-    return this.http.post<{ success: boolean; data: Cart }>(
-      `${this.apiUrl}/merge`,
-      { session_id: sessionId }
-    ).pipe(
-      map(response => response.data),
-      tap(cart => {
-        this.cartSubject.next(cart);
-        localStorage.removeItem('guest_cart_session');
-      })
-    );
+    return of(this.mockCart);
   }
 }

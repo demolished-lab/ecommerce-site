@@ -43,7 +43,10 @@ class SellerBase(BaseModel):
     store_name: str = Field(..., min_length=3, max_length=150)
     store_description: Optional[str] = Field(None, max_length=5000)
     business_name: str = Field(..., min_length=2, max_length=200)
-    business_type: str = Field(..., pattern="^(LLC|Corporation|Sole Proprietorship|Partnership|Non-Profit|Other)$")
+    business_type: str = Field(
+        ...,
+        pattern="^(LLC|Corporation|Sole Proprietorship|Partnership|Non-Profit|Other)$",
+    )
 
 
 class SellerCreate(BaseModel):
@@ -71,10 +74,10 @@ class SellerCreate(BaseModel):
 
     social_links: Optional[SocialLinks] = None
 
-    @validator('store_name')
+    @validator("store_name")
     def validate_store_name(cls, v):
         if not re.match(r'^[\w\s\-&\'"\.]{3,150}$', v):
-            raise ValueError('Store name contains invalid characters')
+            raise ValueError("Store name contains invalid characters")
         return v.strip()
 
 
@@ -147,6 +150,7 @@ class SellerResponse(BaseModel):
 
 class SellerPublicProfile(BaseModel):
     """Public seller profile shown to buyers"""
+
     id: UUID
     store_name: str
     store_slug: str

@@ -22,7 +22,7 @@ export interface Payment {
   id: string;
   payment_method: string;
   provider?: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+  status: "pending" | "processing" | "completed" | "failed" | "refunded";
   amount: number;
   currency: string;
   fee_amount: number;
@@ -100,14 +100,21 @@ export interface Order {
 }
 
 export interface OrderCreate {
-  shipping_address_id: string;
+  shipping_address_id?: string;
+  shipping_address?: ShippingAddress;
   shipping_method?: string;
   customer_notes?: string;
   is_gift?: boolean;
   gift_message?: string;
-  gift_wrap?: boolean;
+  gift_wrap?: string;
   coupon_code?: string;
-  payment_method: 'credit_card' | 'debit_card' | 'paypal' | 'stripe' | 'bank_transfer' | 'cash_on_delivery';
+  payment_method:
+    | "credit_card"
+    | "debit_card"
+    | "paypal"
+    | "stripe"
+    | "bank_transfer"
+    | "cash_on_delivery";
 }
 
 export interface ShippingAddress {

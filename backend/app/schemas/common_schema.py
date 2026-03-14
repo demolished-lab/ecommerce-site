@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import List, TypeVar, Generic, Optional
 from datetime import datetime
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class PaginationParams(BaseModel):
@@ -33,7 +33,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
             page_size=page_size,
             total_pages=total_pages,
             has_next=page < total_pages,
-            has_previous=page > 1
+            has_previous=page > 1,
         )
 
 

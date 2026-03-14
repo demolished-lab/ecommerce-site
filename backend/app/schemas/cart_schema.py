@@ -9,7 +9,7 @@ from uuid import UUID
 class CartItemCustomization(BaseModel):
     key: str
     value: str
-    price_adjustment: Optional[Decimal] = Decimal('0')
+    price_adjustment: Optional[Decimal] = Decimal("0")
 
 
 class CartItemBase(BaseModel):
@@ -105,6 +105,7 @@ class CartSummary(BaseModel):
 
 class CartMergeRequest(BaseModel):
     """Merge guest cart with user cart on login"""
+
     session_id: str
 
 
@@ -137,6 +138,7 @@ class ApplyCouponResponse(BaseModel):
 
 class SavedForLaterItem(BaseModel):
     """Item saved for later (from cart)"""
+
     id: UUID
     product_id: UUID
     product_name: str
@@ -150,5 +152,6 @@ class SavedForLaterItem(BaseModel):
 
 class MoveToCartRequest(BaseModel):
     """Move saved item back to cart"""
+
     saved_item_id: UUID
     quantity: int = Field(1, ge=1, le=99)

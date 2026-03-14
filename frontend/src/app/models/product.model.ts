@@ -11,6 +11,7 @@ export interface Category {
   is_active: boolean;
   is_featured: boolean;
   subcategories?: Category[];
+  product_count?: number;
 }
 
 export interface ProductImage {
@@ -61,8 +62,14 @@ export interface Product {
   compare_at_price?: number;
   currency: string;
   stock_quantity: number;
-  status: 'draft' | 'pending' | 'active' | 'out_of_stock' | 'suspended' | 'discontinued';
-  condition: 'new' | 'used' | 'refurbished' | 'open_box';
+  status:
+    | "draft"
+    | "pending"
+    | "active"
+    | "out_of_stock"
+    | "suspended"
+    | "discontinued";
+  condition: "new" | "used" | "refurbished" | "open_box";
   is_featured: boolean;
   is_digital: boolean;
   weight?: number;
@@ -87,6 +94,7 @@ export interface Product {
   images: ProductImage[];
   variants: ProductVariant[];
   reviews: ProductReview[];
+  primary_image?: string;
 
   created_at: string;
   updated_at: string;
@@ -127,5 +135,5 @@ export interface ProductFilters {
   is_featured?: boolean;
   search?: string;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: "asc" | "desc";
 }
