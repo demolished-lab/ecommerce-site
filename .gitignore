@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.env
+*.db
+
+# Angular
+node_modules/
+dist/
+.angular/
+
+# OS
+.DS_Store
