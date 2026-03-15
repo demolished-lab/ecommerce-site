@@ -37,15 +37,24 @@ UUID = GUID
 
 logger = logging.getLogger(__name__)
 
-# Create engine with connection pooling
-engine = create_engine(
-    settings.DATABASE_URL,
-    pool_size=20,
-    max_overflow=30,
-    pool_pre_ping=True,
-    pool_recycle=3600,
-    echo=settings.DEBUG,
-)
+# Create engine with appropriate arguments for database type
+connect_args = {}
+if settings.DATABASE_URL.startswith("sqlite"):
+    connect_args["check_same_thread"] = False
+
+engine_kwargs = {
+    "pool_pre_ping": True,
+    "pool_recycle": 3600,
+    "echo": settings.DEBUG,
+    "connect_args": connect_args
+}
+
+# Only add pooling arguments for non-SQLite databases
+if not settings.DATABASE_URL.startswith("sqlite"):
+    engine_kwargs["pool_size"] = 20
+    engine_kwargs["max_overflow"] = 30
+
+engine = create_engine(settings.DATABASE_URL, **engine_kwargs)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

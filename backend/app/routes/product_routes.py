@@ -18,7 +18,7 @@ from app.schemas.product_schema import (
 from app.schemas.common_schema import ApiResponse, PaginatedResponse, SuccessResponse
 
 # ProductService currently lives in cart_service due to file misplacement
-from app.services.cart_service import ProductService
+from app.services.product_service import ProductService
 from app.middleware.auth_middleware import (
     get_current_user,
     get_current_user_optional,

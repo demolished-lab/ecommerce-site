@@ -33,7 +33,7 @@ import { User } from "../../../models/user.model";
     <mat-toolbar class="header-toolbar" color="primary">
       <!-- Logo -->
       <a routerLink="/" class="logo-link">
-        <img src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=150&auto=format&fit=crop" alt="VaultMarket Logo" class="header-logo" />
+        <img src="https://images.unsplash.com/photo-1599420186946-7b6fb4e297f0?q=80&w=150&auto=format&fit=crop" alt="VaultMarket Logo" class="header-logo" />
         <span class="logo-text">VaultMarket</span>
       </a>
 
@@ -180,12 +180,14 @@ import { User } from "../../../models/user.model";
       }
 
       .logo-text {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 800;
-        letter-spacing: -0.5px;
-        background: linear-gradient(to right, #ffffff, #e2e8f0);
+        letter-spacing: -1px;
+        background: linear-gradient(135deg, #ffffff 0%, #ffd700 50%, #ffffff 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        text-transform: uppercase;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
       }
 
       .search-container {

@@ -16,6 +16,8 @@ from app.schemas.seller_schema import (
     SellerDashboardStats,
     SellerSalesReport,
 )
+from app.models.product import Product, ProductVariant, ProductStatus
+from app.schemas.product_schema import ProductCreate
 from app.config.settings import settings
 
 
