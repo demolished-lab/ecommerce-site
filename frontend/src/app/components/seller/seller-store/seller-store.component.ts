@@ -200,35 +200,35 @@ export class SellerStoreComponent implements OnInit {
     const dummies: any[] = [
       {
         id: 's1', user_id: 'u1', store_name: 'Tech Haven', store_slug: 'tech-haven',
-        store_description: 'Premium electronics and gadgets for tech enthusiasts. We pride ourselves on fast shipping and excellent customer service.',
+        store_description: 'Discover the future of technology. From high-performance computing to premium audio experiences, Tech Haven curates only the finest gadgets for the modern professional.',
         address_city: 'San Francisco', address_country: 'USA', is_verified: true,
         total_products: 145, average_rating: 4.9, review_count: 1250,
-        store_logo: 'https://loremflickr.com/300/300/electronics,gadget?lock=201',
-        store_banner: 'https://loremflickr.com/1200/400/electronics,tech?lock=202'
+        store_logo: 'https://images.unsplash.com/photo-1496171367470-9ed9a91ea931?q=80&w=300&auto=format&fit=crop',
+        store_banner: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1200&auto=format&fit=crop'
       },
       {
         id: 's2', user_id: 'u2', store_name: 'Urban Threads', store_slug: 'urban-threads',
-        store_description: 'Trendy fashion for the modern urban lifestyle. Sustainable materials and ethical manufacturing.',
+        store_description: 'Elevated essentials for the urban explorer. Our collection blends sustainable materials with timeless design for a wardrobe that lasts provided by vetted artisans.',
         address_city: 'New York', address_country: 'USA', is_verified: true,
         total_products: 420, average_rating: 4.7, review_count: 890,
-        store_logo: 'https://loremflickr.com/300/300/fashion,clothing,logo?lock=203',
-        store_banner: 'https://loremflickr.com/1200/400/fashion,apparel?lock=204'
+        store_logo: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=300&auto=format&fit=crop',
+        store_banner: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200&auto=format&fit=crop'
       },
       {
-        id: 's3', user_id: 'u3', store_name: 'Home Essentials', store_slug: 'home-essentials',
-        store_description: 'Everything you need to make your house a beautiful home. Furniture, decor, and more.',
+        id: 's3', user_id: 'u3', store_name: 'Home Sanctuary', store_slug: 'home-essentials',
+        store_description: 'Transform your living space into a sanctuary of comfort and style. We offer curated home decor and furniture that tells a story of craftsmanship and elegance.',
         address_city: 'Austin', address_country: 'USA', is_verified: true,
         total_products: 210, average_rating: 4.6, review_count: 450,
-        store_logo: 'https://loremflickr.com/300/300/furniture,home?lock=205',
-        store_banner: 'https://loremflickr.com/1200/400/livingroom,interior?lock=206'
+        store_logo: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=300&auto=format&fit=crop',
+        store_banner: 'https://images.unsplash.com/photo-1616489953149-8e7c371059f3?q=80&w=1200&auto=format&fit=crop'
       },
       {
-        id: 's4', user_id: 'u4', store_name: 'Green Thumb Gardens', store_slug: 'green-thumb',
-        store_description: 'Plants, tools, and advice for the perfect garden setup. Specializing in rare indoor plants.',
+        id: 's4', user_id: 'u4', store_name: 'Verdant Gardens', store_slug: 'green-thumb',
+        store_description: 'Bringing the beauty of nature to your doorstep. Specializing in exotic indoor plants and artisanal gardening tools for the sophisticated green thumb.',
         address_city: 'Portland', address_country: 'USA', is_verified: true,
         total_products: 85, average_rating: 4.8, review_count: 310,
-        store_logo: 'https://loremflickr.com/300/300/plant,botany?lock=100',
-        store_banner: 'https://loremflickr.com/1200/400/plants,garden?lock=101'
+        store_logo: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?q=80&w=300&auto=format&fit=crop',
+        store_banner: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?q=80&w=1200&auto=format&fit=crop'
       }
     ];
 
@@ -255,7 +255,13 @@ export class SellerStoreComponent implements OnInit {
   }
 
   addToCart(product: Product): void {
-    this.cartService.addItem({ product_id: product.id, quantity: 1 }).subscribe({
+    this.cartService.addItem({ 
+      product_id: product.id, 
+      quantity: 1,
+      product_name: product.title,
+      product_image: product.primary_image,
+      unit_price: product.price
+    }).subscribe({
       next: () => {
         this.snackBar.open(`${product.title} added to cart`, 'Close', {
           duration: 3000,

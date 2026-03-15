@@ -60,7 +60,7 @@ export class CartService {
 
     this.mockCart.subtotal = subtotal;
     this.mockCart.tax_amount = subtotal * 0.08; // 8% mock tax
-    this.mockCart.shipping_estimate = subtotal > 0 ? 15.00 : 0; // Flat $15 shipping
+    this.mockCart.shipping_estimate = subtotal > 100 ? 0 : (subtotal > 0 ? 15.00 : 0); // Free shipping over $100
     this.mockCart.total = this.mockCart.subtotal + this.mockCart.tax_amount + this.mockCart.shipping_estimate;
     this.mockCart.item_count = count;
     this.mockCart.unique_item_count = this.mockCart.items.length;
@@ -83,17 +83,17 @@ export class CartService {
       existingItem.quantity += item.quantity;
       existingItem.total_price = existingItem.quantity * existingItem.unit_price;
     } else {
-      // Mock lookup a price based on id for demo purposes
-      const mockPrice = 45.00; // default mock price
+      const unitPrice = item.unit_price || 45.00;
       this.mockCart.items.push({
         id: Math.random().toString(36).substring(7),
         product_id: item.product_id,
         variant_id: item.variant_id,
         quantity: item.quantity,
         max_quantity: 10,
-        unit_price: mockPrice,
-        total_price: mockPrice * item.quantity,
-        product_name: "Mock Product",
+        unit_price: unitPrice,
+        total_price: unitPrice * item.quantity,
+        product_name: item.product_name || "Unknown Product",
+        product_image: item.product_image,
         is_gift: false,
         is_available: true
       });

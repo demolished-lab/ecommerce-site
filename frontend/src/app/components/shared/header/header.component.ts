@@ -33,7 +33,8 @@ import { User } from "../../../models/user.model";
     <mat-toolbar class="header-toolbar" color="primary">
       <!-- Logo -->
       <a routerLink="/" class="logo-link">
-        <span class="logo-text">🛒 Marketplace</span>
+        <img src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=150&auto=format&fit=crop" alt="VaultMarket Logo" class="header-logo" />
+        <span class="logo-text">VaultMarket</span>
       </a>
 
       <!-- Search Bar -->
@@ -166,11 +167,25 @@ import { User } from "../../../models/user.model";
       .logo-link {
         text-decoration: none;
         color: inherit;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .header-logo {
+        height: 32px;
+        width: 32px;
+        object-fit: contain;
+        border-radius: 6px;
       }
 
       .logo-text {
-        font-size: 24px;
-        font-weight: bold;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        background: linear-gradient(to right, #ffffff, #e2e8f0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
       }
 
       .search-container {

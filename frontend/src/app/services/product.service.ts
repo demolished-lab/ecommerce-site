@@ -8,7 +8,11 @@ import { Product, Category } from "../models/product.model";
 })
 export class ProductService {
   getFeaturedProducts(limit = 100): Observable<Product[]> {
-    const sample: Product[] = [
+    return of(this.getSampleProducts().slice(0, limit));
+  }
+
+  private getSampleProducts(): Product[] {
+    return [
       // Seller 1: Tech Haven (s1) - Electronics
       {
         id: "prod-1", title: "Premium Wireless Headphones", slug: "premium-wireless-headphones",
@@ -20,7 +24,7 @@ export class ProductService {
         seller_id: "s1", seller_name: "Tech Haven", seller_slug: "tech-haven", seller_rating: 4.9,
         category_id: "cat-1", category_name: "Electronics",
         images: [], variants: [], reviews: [],
-        primary_image: "/assets/images/products/headphones.png",
+        primary_image: "assets/images/products/headphones.png",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 16,
       },
@@ -34,7 +38,7 @@ export class ProductService {
         seller_id: "s1", seller_name: "Tech Haven", seller_slug: "tech-haven", seller_rating: 4.9,
         category_id: "cat-1", category_name: "Electronics",
         images: [], variants: [], reviews: [],
-        primary_image: "/assets/images/products/smartwatch.png",
+        primary_image: "assets/images/products/smartwatch.png",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -48,7 +52,7 @@ export class ProductService {
         seller_id: "s1", seller_name: "Tech Haven", seller_slug: "tech-haven", seller_rating: 4.9,
         category_id: "cat-1", category_name: "Electronics",
         images: [], variants: [], reviews: [],
-        primary_image: "/assets/images/products/dslr.png",
+        primary_image: "assets/images/products/dslr.png",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 14,
       },
@@ -62,7 +66,7 @@ export class ProductService {
         seller_id: "s1", seller_name: "Tech Haven", seller_slug: "tech-haven", seller_rating: 4.9,
         category_id: "cat-1", category_name: "Electronics",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/monitor?lock=4",
+        primary_image: "https://images.unsplash.com/photo-1547115941-bb84f5f60600?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 10,
       },
@@ -76,7 +80,7 @@ export class ProductService {
         seller_id: "s1", seller_name: "Tech Haven", seller_slug: "tech-haven", seller_rating: 4.9,
         category_id: "cat-1", category_name: "Electronics",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/keyboard?lock=5",
+        primary_image: "https://images.unsplash.com/photo-1595225476474-87563907a212?q=80&w=1000&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -90,7 +94,7 @@ export class ProductService {
         seller_id: "s1", seller_name: "Tech Haven", seller_slug: "tech-haven", seller_rating: 4.9,
         category_id: "cat-1", category_name: "Electronics",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/mouse?lock=6",
+        primary_image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?q=80&w=1000&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 18,
       },
@@ -104,7 +108,7 @@ export class ProductService {
         seller_id: "s1", seller_name: "Tech Haven", seller_slug: "tech-haven", seller_rating: 4.9,
         category_id: "cat-1", category_name: "Electronics",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/harddrive?lock=7",
+        primary_image: "https://images.unsplash.com/photo-1517430816045-df4b7de11d1d?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -120,7 +124,7 @@ export class ProductService {
         seller_id: "s2", seller_name: "Urban Threads", seller_slug: "urban-threads", seller_rating: 4.7,
         category_id: "cat-2", category_name: "Fashion Area",
         images: [], variants: [], reviews: [],
-        primary_image: "/assets/images/products/shoes.png",
+        primary_image: "assets/images/products/shoes.png",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -134,7 +138,7 @@ export class ProductService {
         seller_id: "s2", seller_name: "Urban Threads", seller_slug: "urban-threads", seller_rating: 4.7,
         category_id: "cat-2", category_name: "Fashion Area",
         images: [], variants: [], reviews: [],
-        primary_image: "/assets/images/products/sunglasses.png",
+        primary_image: "assets/images/products/sunglasses.png",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 25,
       },
@@ -148,7 +152,7 @@ export class ProductService {
         seller_id: "s2", seller_name: "Urban Threads", seller_slug: "urban-threads", seller_rating: 4.7,
         category_id: "cat-2", category_name: "Fashion Area",
         images: [], variants: [], reviews: [],
-        primary_image: "/assets/images/products/backpack.png",
+        primary_image: "assets/images/products/backpack.png",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -162,7 +166,7 @@ export class ProductService {
         seller_id: "s2", seller_name: "Urban Threads", seller_slug: "urban-threads", seller_rating: 4.7,
         category_id: "cat-2", category_name: "Fashion Area",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/denim,jacket?lock=11",
+        primary_image: "https://images.unsplash.com/photo-1567361899017-d5d36e2f1f1d?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 18,
       },
@@ -176,7 +180,7 @@ export class ProductService {
         seller_id: "s2", seller_name: "Urban Threads", seller_slug: "urban-threads", seller_rating: 4.7,
         category_id: "cat-2", category_name: "Fashion Area",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/tshirt?lock=12",
+        primary_image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1000&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -190,7 +194,7 @@ export class ProductService {
         seller_id: "s2", seller_name: "Urban Threads", seller_slug: "urban-threads", seller_rating: 4.7,
         category_id: "cat-4", category_name: "Beauty",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/skincare,serum?lock=13",
+        primary_image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1000&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 21,
       },
@@ -204,7 +208,7 @@ export class ProductService {
         seller_id: "s2", seller_name: "Urban Threads", seller_slug: "urban-threads", seller_rating: 4.7,
         category_id: "cat-4", category_name: "Beauty",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/face,cleanser?lock=14",
+        primary_image: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=1000&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -220,7 +224,7 @@ export class ProductService {
         seller_id: "s3", seller_name: "Home Essentials", seller_slug: "home-essentials", seller_rating: 4.6,
         category_id: "cat-3", category_name: "Home & Kitchen",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/coffee,maker?lock=15",
+        primary_image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 25,
       },
@@ -234,7 +238,7 @@ export class ProductService {
         seller_id: "s3", seller_name: "Home Essentials", seller_slug: "home-essentials", seller_rating: 4.6,
         category_id: "cat-3", category_name: "Home & Kitchen",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/blanket?lock=16",
+        primary_image: "https://images.unsplash.com/photo-1543157145-f78c636d023d?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -248,7 +252,7 @@ export class ProductService {
         seller_id: "s3", seller_name: "Home Essentials", seller_slug: "home-essentials", seller_rating: 4.6,
         category_id: "cat-3", category_name: "Home & Kitchen",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/plates,ceramic?lock=17",
+        primary_image: "https://images.unsplash.com/photo-1594913215266-963db874aae6?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 18,
       },
@@ -262,7 +266,7 @@ export class ProductService {
         seller_id: "s3", seller_name: "Home Essentials", seller_slug: "home-essentials", seller_rating: 4.6,
         category_id: "cat-5", category_name: "Sports",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/yoga,mat?lock=18",
+        primary_image: "https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?q=80&w=1000&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -276,7 +280,7 @@ export class ProductService {
         seller_id: "s3", seller_name: "Home Essentials", seller_slug: "home-essentials", seller_rating: 4.6,
         category_id: "cat-5", category_name: "Sports",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/resistance,bands,fitness?lock=19",
+        primary_image: "https://images.unsplash.com/photo-1541534741688-6078c64b52d3?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 28,
       },
@@ -290,7 +294,7 @@ export class ProductService {
         seller_id: "s3", seller_name: "Home Essentials", seller_slug: "home-essentials", seller_rating: 4.6,
         category_id: "cat-6", category_name: "Toys & Games",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/building,blocks,toy?lock=20",
+        primary_image: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -304,7 +308,7 @@ export class ProductService {
         seller_id: "s3", seller_name: "Home Essentials", seller_slug: "home-essentials", seller_rating: 4.6,
         category_id: "cat-6", category_name: "Toys & Games",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/boardgame?lock=21",
+        primary_image: "https://images.unsplash.com/photo-1632501641765-e568d28b0015?q=80&w=1000&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 25,
       },
@@ -318,9 +322,9 @@ export class ProductService {
         view_count: 5600, sales_count: 1200, average_rating: 4.8, review_count: 310,
         attributes: {}, tags: ["garden", "plants", "indoor"],
         seller_id: "s4", seller_name: "Green Thumb Gardens", seller_slug: "green-thumb", seller_rating: 4.8,
-        category_id: "cat-3", category_name: "Home & Kitchen",
+        category_id: "cat-7", category_name: "Garden",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/monstera,plant?lock=22",
+        primary_image: "https://images.unsplash.com/photo-1614594975525-e45190c55d0b?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 18,
       },
@@ -332,9 +336,9 @@ export class ProductService {
         view_count: 4200, sales_count: 300, average_rating: 4.6, review_count: 145,
         attributes: {}, tags: ["garden", "plants", "indoor"],
         seller_id: "s4", seller_name: "Green Thumb Gardens", seller_slug: "green-thumb", seller_rating: 4.8,
-        category_id: "cat-3", category_name: "Home & Kitchen",
+        category_id: "cat-7", category_name: "Garden",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/fiddle,leaf,fig?lock=23",
+        primary_image: "https://images.unsplash.com/photo-1592150621344-afed8b638a5a?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -346,9 +350,9 @@ export class ProductService {
         view_count: 6000, sales_count: 1500, average_rating: 4.9, review_count: 620,
         attributes: {}, tags: ["garden", "plants", "small"],
         seller_id: "s4", seller_name: "Green Thumb Gardens", seller_slug: "green-thumb", seller_rating: 4.8,
-        category_id: "cat-3", category_name: "Home & Kitchen",
+        category_id: "cat-7", category_name: "Garden",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/succulents?lock=24",
+        primary_image: "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 28,
       },
@@ -360,9 +364,9 @@ export class ProductService {
         view_count: 2000, sales_count: 800, average_rating: 4.5, review_count: 230,
         attributes: {}, tags: ["garden", "supplies"],
         seller_id: "s4", seller_name: "Green Thumb Gardens", seller_slug: "green-thumb", seller_rating: 4.8,
-        category_id: "cat-3", category_name: "Home & Kitchen",
+        category_id: "cat-7", category_name: "Garden",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/fertilizer?lock=25",
+        primary_image: "https://images.unsplash.com/photo-1621328070209-416585778844?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 0,
       },
@@ -376,7 +380,7 @@ export class ProductService {
         seller_id: "s4", seller_name: "Green Thumb Gardens", seller_slug: "green-thumb", seller_rating: 4.8,
         category_id: "cat-4", category_name: "Beauty",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/essential,oil?lock=26",
+        primary_image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 25,
       },
@@ -388,9 +392,9 @@ export class ProductService {
         view_count: 850, sales_count: 120, average_rating: 4.8, review_count: 42,
         attributes: {}, tags: ["garden", "tools"],
         seller_id: "s4", seller_name: "Green Thumb Gardens", seller_slug: "green-thumb", seller_rating: 4.8,
-        category_id: "cat-3", category_name: "Home & Kitchen",
+        category_id: "cat-7", category_name: "Garden",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/garden,trowel?lock=27",
+        primary_image: "https://images.unsplash.com/photo-1671981248981-2a628373b747?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 18,
       },
@@ -402,15 +406,13 @@ export class ProductService {
         view_count: 1200, sales_count: 45, average_rating: 4.9, review_count: 18,
         attributes: {}, tags: ["garden", "decor", "indoor"],
         seller_id: "s4", seller_name: "Green Thumb Gardens", seller_slug: "green-thumb", seller_rating: 4.8,
-        category_id: "cat-3", category_name: "Home & Kitchen",
+        category_id: "cat-7", category_name: "Garden",
         images: [], variants: [], reviews: [],
-        primary_image: "https://loremflickr.com/800/800/plant,stand?lock=28",
+        primary_image: "https://images.unsplash.com/photo-1592178036219-5415ef4eb806?q=80&w=800&auto=format&fit=crop",
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         is_in_stock: true, discount_percentage: 24,
       }
     ];
-    // Always return all based on limit so nothing breaks, but default to 100 so pages get everything
-    return of(sample.slice(0, limit));
   }
 
   getProductBySlug(slug: string): Observable<Product> {
@@ -426,14 +428,22 @@ export class ProductService {
   }
 
   getCategories(): Observable<Category[]> {
+    const products = this.getSampleProducts();
     const categories: Category[] = [
-      { id: "cat-1", name: "Electronics", slug: "electronics", icon: "devices", level: 0, sort_order: 1, is_active: true, is_featured: true, product_count: 1432 },
-      { id: "cat-2", name: "Fashion Area", slug: "fashion", icon: "checkroom", level: 0, sort_order: 2, is_active: true, is_featured: true, product_count: 890 },
-      { id: "cat-3", name: "Home & Kitchen", slug: "home", icon: "kitchen", level: 0, sort_order: 3, is_active: true, is_featured: true, product_count: 540 },
-      { id: "cat-4", name: "Beauty", slug: "beauty", icon: "face", level: 0, sort_order: 4, is_active: true, is_featured: true, product_count: 320 },
-      { id: "cat-5", name: "Sports", slug: "sports", icon: "sports_basketball", level: 0, sort_order: 5, is_active: true, is_featured: true, product_count: 210 },
-      { id: "cat-6", name: "Toys & Games", slug: "toys", icon: "toys", level: 0, sort_order: 6, is_active: true, is_featured: true, product_count: 150 },
+      { id: "cat-1", name: "Electronics", slug: "electronics", icon: "devices", level: 0, sort_order: 1, is_active: true, is_featured: true, product_count: 0, image_url: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=800&auto=format&fit=crop' },
+      { id: "cat-2", name: "Fashion Area", slug: "fashion", icon: "checkroom", level: 0, sort_order: 2, is_active: true, is_featured: true, product_count: 0, image_url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop' },
+      { id: "cat-3", name: "Home & Kitchen", slug: "home", icon: "kitchen", level: 0, sort_order: 3, is_active: true, is_featured: true, product_count: 0, image_url: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=800&auto=format&fit=crop' },
+      { id: "cat-4", name: "Beauty", slug: "beauty", icon: "face", level: 0, sort_order: 4, is_active: true, is_featured: true, product_count: 0, image_url: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=800&auto=format&fit=crop' },
+      { id: "cat-5", name: "Sports", slug: "sports", icon: "sports_basketball", level: 0, sort_order: 5, is_active: true, is_featured: true, product_count: 0, image_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop' },
+      { id: "cat-6", name: "Toys & Games", slug: "toys", icon: "toys", level: 0, sort_order: 6, is_active: true, is_featured: true, product_count: 0, image_url: 'https://images.unsplash.com/photo-1545558014-8692077e9b5c?q=80&w=800&auto=format&fit=crop' },
+      { id: "cat-7", name: "Garden", slug: "garden", icon: "yard", level: 0, sort_order: 7, is_active: true, is_featured: true, product_count: 0, image_url: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?q=80&w=800&auto=format&fit=crop' },
     ];
-    return of(categories);
+
+    const finalCategories = categories.map(cat => ({
+      ...cat,
+      product_count: products.filter(p => p.category_id === cat.id).length
+    }));
+
+    return of(finalCategories);
   }
 }

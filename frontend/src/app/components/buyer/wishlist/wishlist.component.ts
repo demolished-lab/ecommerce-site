@@ -4,7 +4,9 @@ import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { Observable } from 'rxjs';
 import { CartService } from '../../../services/cart.service';
+import { WishlistService, WishlistItem } from '../../../services/wishlist.service';
 
 @Component({
   selector: 'app-wishlist',
@@ -13,17 +15,17 @@ import { CartService } from '../../../services/cart.service';
   template: `
     <div class="page" style="padding: 80px 24px 24px; max-width: 1000px; margin: auto;">
       <h1>My Wishlist</h1>
-      <div *ngIf="items.length === 0" class="empty">
+      <div *ngIf="(items$ | async)?.length === 0" class="empty">
         <mat-icon>favorite_border</mat-icon>
         <h3>Your wishlist is empty</h3>
         <p>Save items you love for later</p>
         <a mat-flat-button color="primary" routerLink="/products">Browse Products</a>
       </div>
-      <div class="wishlist-grid" *ngIf="items.length > 0">
-        <mat-card *ngFor="let item of items; let i = index" class="wishlist-card">
+      <div class="wishlist-grid" *ngIf="(items$ | async) as items">
+        <mat-card *ngFor="let item of items" class="wishlist-card">
           <div class="image-wrap">
             <img [src]="item.image || 'https://placehold.co/150x150/eeeeee/999999?text=No+Image'" [alt]="item.name" />
-            <button mat-icon-button class="remove-btn" (click)="remove(i)"><mat-icon>close</mat-icon></button>
+            <button mat-icon-button class="remove-btn" (click)="remove(item.id)"><mat-icon>close</mat-icon></button>
           </div>
           <mat-card-content>
             <h3 class="item-name">{{ item.name }}</h3>
@@ -49,23 +51,33 @@ import { CartService } from '../../../services/cart.service';
     .wishlist-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
     .image-wrap { position: relative; aspect-ratio: 1; overflow: hidden; }
     .image-wrap img { width: 100%; height: 100%; object-fit: cover; }
-    .remove-btn { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,.9); }
+    .remove-btn { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,.9); z-index: 2; }
     .item-name { font-size: 15px; font-weight: 500; margin: 8px 0 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .item-price { font-size: 18px; font-weight: 700; color: #1976d2; }
   `],
 })
 export class WishlistComponent {
-  items = [
-    { id: '1', name: 'Premium Wireless Headphones', price: 249.99, image: '/assets/images/products/headphones.png' },
-    { id: '4', name: '4K LED Creator Monitor', price: 450.00, image: 'https://loremflickr.com/800/800/monitor?lock=4' },
-    { id: '8', name: 'Athletic Running Shoes', price: 129.99, image: '/assets/images/products/shoes.png' },
-  ];
+  items$: Observable<WishlistItem[]>;
 
-  constructor(private cartService: CartService) {}
+  constructor(
+    private cartService: CartService,
+    private wishlistService: WishlistService
+  ) {
+    this.items$ = this.wishlistService.wishlist$;
+  }
 
-  remove(i: number): void { this.items.splice(i, 1); }
+  remove(id: string): void { 
+    this.wishlistService.removeFromWishlist(id);
+  }
 
-  addToCart(item: any): void {
-    this.cartService.addItem({ product_id: item.id, quantity: 1 }).subscribe();
+  addToCart(item: WishlistItem): void {
+    this.cartService.addItem({ 
+      product_id: item.id, 
+      quantity: 1,
+      product_name: item.name,
+      product_image: item.image,
+      unit_price: item.price
+    }).subscribe();
   }
 }
+

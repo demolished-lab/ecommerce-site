@@ -126,47 +126,47 @@ export class SellerListComponent implements OnInit {
     this.sellers = [
       {
         id: 's1', user_id: 'u1', store_name: 'Tech Haven', store_slug: 'tech-haven',
-        store_description: 'Premium electronics and gadgets for tech enthusiasts.',
+        store_description: 'Discover the future of technology. From high-performance computing to premium audio gear, Tech Haven curates the finest gadgets.',
         business_name: 'Tech Haven LLC', business_type: 'retail', business_email: 'contact@techhaven.com',
         business_phone: '555-0100', address_city: 'San Francisco', address_state: 'CA', address_country: 'USA',
         status: 'active', tier: 'platinum', commission_rate: 10, is_verified: true,
         total_products: 145, total_orders: 8900, total_revenue: 150000,
         average_rating: 4.9, review_count: 1250, created_at: new Date().toISOString(),
-        store_logo: 'https://loremflickr.com/300/300/electronics,gadget?lock=201',
-        store_banner: 'https://loremflickr.com/800/400/electronics,tech?lock=202'
+        store_logo: 'https://images.unsplash.com/photo-1496171367470-9ed9a91ea931?q=80&w=300&auto=format&fit=crop',
+        store_banner: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800&auto=format&fit=crop'
       },
       {
         id: 's2', user_id: 'u2', store_name: 'Urban Threads', store_slug: 'urban-threads',
-        store_description: 'Trendy fashion for the modern urban lifestyle.',
+        store_description: 'Elevated essentials for the urban explorer. Our collection blends sustainable materials with timeless design.',
         business_name: 'Urban Threads Inc', business_type: 'apparel', business_email: 'hello@urbanthreads.com',
         business_phone: '555-0200', address_city: 'New York', address_state: 'NY', address_country: 'USA',
         status: 'active', tier: 'gold', commission_rate: 12, is_verified: true,
         total_products: 420, total_orders: 5600, total_revenue: 85000,
         average_rating: 4.7, review_count: 890, created_at: new Date().toISOString(),
-        store_logo: 'https://loremflickr.com/300/300/fashion,clothing,logo?lock=203',
-        store_banner: 'https://loremflickr.com/800/400/fashion,apparel?lock=204'
+        store_logo: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=300&auto=format&fit=crop',
+        store_banner: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=800&auto=format&fit=crop'
       },
       {
-        id: 's3', user_id: 'u3', store_name: 'Home Essentials', store_slug: 'home-essentials',
-        store_description: 'Everything you need to make your house a beautiful home.',
+        id: 's3', user_id: 'u3', store_name: 'Home Sanctuary', store_slug: 'home-essentials',
+        store_description: 'Transform your space into a sanctuary. We offer curated home decor and furniture that tells a story of craftsmanship.',
         business_name: 'Home Goods Corp', business_type: 'home', business_email: 'support@homeessentials.com',
         business_phone: '555-0300', address_city: 'Austin', address_state: 'TX', address_country: 'USA',
         status: 'active', tier: 'silver', commission_rate: 15, is_verified: true,
         total_products: 210, total_orders: 3400, total_revenue: 62000,
         average_rating: 4.6, review_count: 450, created_at: new Date().toISOString(),
-        store_logo: 'https://loremflickr.com/300/300/furniture,home?lock=205',
-        store_banner: 'https://loremflickr.com/800/400/livingroom,interior?lock=206'
+        store_logo: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=300&auto=format&fit=crop',
+        store_banner: 'https://images.unsplash.com/photo-1616489953149-8e7c371059f3?q=80&w=800&auto=format&fit=crop'
       },
       {
-        id: 's4', user_id: 'u4', store_name: 'Green Thumb Gardens', store_slug: 'green-thumb',
-        store_description: 'Plants, tools, and advice for the perfect garden setup.',
+        id: 's4', user_id: 'u4', store_name: 'Verdant Gardens', store_slug: 'green-thumb',
+        store_description: 'Bringing the beauty of nature to your doorstep. Specializing in exotic indoor plants and artisanal gardening tools.',
         business_name: 'Green Thumb LLC', business_type: 'garden', business_email: 'plants@greenthumb.com',
         business_phone: '555-0400', address_city: 'Portland', address_state: 'OR', address_country: 'USA',
         status: 'active', tier: 'bronze', commission_rate: 15, is_verified: true,
         total_products: 85, total_orders: 1200, total_revenue: 28000,
         average_rating: 4.8, review_count: 310, created_at: new Date().toISOString(),
-        store_logo: 'https://loremflickr.com/300/300/plant,botany?lock=100',
-        store_banner: 'https://loremflickr.com/800/400/plants,garden?lock=101'
+        store_logo: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?q=80&w=300&auto=format&fit=crop',
+        store_banner: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?q=80&w=800&auto=format&fit=crop'
       }
     ];
   }

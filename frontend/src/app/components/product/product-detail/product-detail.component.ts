@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +13,7 @@ import { switchMap } from 'rxjs/operators';
 import { Product } from '../../../models/product.model';
 import { ProductService } from '../../../services/product.service';
 import { CartService } from '../../../services/cart.service';
+import { WishlistService } from '../../../services/wishlist.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -24,7 +26,8 @@ import { CartService } from '../../../services/cart.service';
     MatChipsModule,
     MatDividerModule,
     MatProgressBarModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    FormsModule
   ],
   template: `
     <div class="page-container" *ngIf="product$ | async as product; else loading">
@@ -32,7 +35,7 @@ import { CartService } from '../../../services/cart.service';
         <!-- Image Section -->
         <div class="product-gallery animate-fade-in">
           <div class="main-image-container">
-            <img [src]="product.primary_image || 'https://placehold.co/800x800/eeeeee/999999?text=No+Image'" [alt]="product.title" class="main-image" />
+            <img [src]="product.primary_image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop'" [alt]="product.title" class="main-image" />
             <div class="product-badge" *ngIf="product.is_featured">Featured</div>
             <div class="discount-badge" *ngIf="product.discount_percentage > 0">
               -{{ product.discount_percentage }}%
@@ -66,8 +69,9 @@ import { CartService } from '../../../services/cart.service';
           <div class="price-section">
             <span class="current-price">\${{ product.price | number: '1.2-2' }}</span>
             <span class="original-price" *ngIf="product.compare_at_price">\${{ product.compare_at_price | number: '1.2-2' }}</span>
-            <span class="stock-status" [class.in-stock]="product.stock_quantity > 0">
-              {{ product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock' }}
+            <span class="stock-status" [class.in-stock]="product.stock_quantity > 0" [class.out-of-stock]="product.stock_quantity === 0">
+              <mat-icon>{{ product.stock_quantity > 0 ? 'check_circle' : 'error' }}</mat-icon>
+              {{ product.stock_quantity > 0 ? product.stock_quantity + ' items available' : 'Out of Stock' }}
             </span>
           </div>
 
@@ -87,6 +91,15 @@ import { CartService } from '../../../services/cart.service';
           <mat-divider class="divider"></mat-divider>
 
           <div class="action-buttons">
+            <div class="quantity-picker" *ngIf="product.stock_quantity > 0">
+              <button mat-icon-button (click)="updateQuantity(-1)" [disabled]="selectedQuantity <= 1">
+                <mat-icon>remove</mat-icon>
+              </button>
+              <input type="number" [(ngModel)]="selectedQuantity" (change)="validateQuantity(product)" min="1" [max]="product.stock_quantity" />
+              <button mat-icon-button (click)="updateQuantity(1)" [disabled]="selectedQuantity >= product.stock_quantity">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
             <button 
               mat-flat-button 
               color="primary" 
@@ -94,10 +107,14 @@ import { CartService } from '../../../services/cart.service';
               [disabled]="product.stock_quantity === 0"
               (click)="addToCart(product)">
               <mat-icon>shopping_cart</mat-icon>
-              Add to Cart
+              Add {{ selectedQuantity > 1 ? selectedQuantity : '' }} to Cart
             </button>
-            <button mat-stroked-button color="primary" class="wishlist-btn">
-              <mat-icon>favorite_border</mat-icon>
+            <button 
+              mat-stroked-button 
+              [color]="isInWishlist(product.id) ? 'warn' : 'primary'" 
+              class="wishlist-btn"
+              (click)="toggleWishlist(product)">
+              <mat-icon>{{ isInWishlist(product.id) ? 'favorite' : 'favorite_border' }}</mat-icon>
             </button>
           </div>
           
@@ -267,17 +284,29 @@ import { CartService } from '../../../services/cart.service';
     }
 
     .stock-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-size: 14px;
       font-weight: 500;
-      padding: 4px 12px;
-      border-radius: 4px;
-      background: #f5f5f5;
-      color: #666;
+      padding: 6px 14px;
+      border-radius: 8px;
     }
 
     .stock-status.in-stock {
       background: #e8f5e9;
       color: #2e7d32;
+    }
+
+    .stock-status.out-of-stock {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .stock-status mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
 
     .product-description {
@@ -303,21 +332,55 @@ import { CartService } from '../../../services/cart.service';
 
     .action-buttons {
       display: flex;
+      align-items: center;
       gap: 16px;
       margin-bottom: 32px;
     }
 
+    .quantity-picker {
+      display: flex;
+      align-items: center;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    .quantity-picker input {
+      width: 45px;
+      text-align: center;
+      border: none;
+      background: transparent;
+      font-size: 18px;
+      font-weight: 600;
+      -moz-appearance: textfield;
+    }
+
+    .quantity-picker input::-webkit-outer-spin-button,
+    .quantity-picker input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
     .add-to-cart-btn {
       flex: 1;
-      height: 54px;
+      height: 56px;
       font-size: 18px;
-      border-radius: 8px !important;
+      font-weight: 600;
+      border-radius: 12px !important;
+      background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2) !important;
+    }
+
+    .add-to-cart-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(25, 118, 210, 0.3) !important;
     }
 
     .wishlist-btn {
-      height: 54px;
-      width: 54px;
-      border-radius: 8px !important;
+      height: 56px;
+      width: 56px;
+      border-radius: 12px !important;
     }
 
     .tags-section h3 {
@@ -344,11 +407,13 @@ import { CartService } from '../../../services/cart.service';
 })
 export class ProductDetailComponent implements OnInit {
   product$: Observable<Product> | undefined;
+  selectedQuantity: number = 1;
 
   constructor(
     private route: ActivatedRoute,
     private productService: ProductService,
     private cartService: CartService,
+    private wishlistService: WishlistService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -362,9 +427,15 @@ export class ProductDetailComponent implements OnInit {
   }
 
   addToCart(product: Product): void {
-    this.cartService.addItem({ product_id: product.id, quantity: 1 }).subscribe({
+    this.cartService.addItem({ 
+      product_id: product.id, 
+      quantity: this.selectedQuantity,
+      product_name: product.title,
+      product_image: product.primary_image,
+      unit_price: product.price
+    }).subscribe({
       next: () => {
-        this.snackBar.open(`${product.title} added to cart`, 'Close', {
+        this.snackBar.open(`${this.selectedQuantity}x ${product.title} added to cart`, 'Close', {
           duration: 3000,
           horizontalPosition: 'end',
           verticalPosition: 'bottom'
@@ -375,4 +446,28 @@ export class ProductDetailComponent implements OnInit {
       }
     });
   }
+
+  updateQuantity(delta: number): void {
+    this.selectedQuantity = Math.max(1, this.selectedQuantity + delta);
+  }
+
+  validateQuantity(product: Product): void {
+    if (this.selectedQuantity < 1) this.selectedQuantity = 1;
+    if (this.selectedQuantity > product.stock_quantity) this.selectedQuantity = product.stock_quantity;
+  }
+
+  toggleWishlist(product: Product): void {
+    const added = this.wishlistService.toggleWishlist(product);
+    const message = added ? 'Added to wishlist' : 'Removed from wishlist';
+    this.snackBar.open(`${product.title} ${message}`, 'Close', {
+      duration: 3000,
+      horizontalPosition: 'end',
+      verticalPosition: 'bottom'
+    });
+  }
+
+  isInWishlist(productId: string): boolean {
+    return this.wishlistService.isInWishlist(productId);
+  }
 }
+

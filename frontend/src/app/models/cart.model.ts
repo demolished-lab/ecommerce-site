@@ -39,6 +39,9 @@ export interface CartAddItem {
   product_id: string;
   variant_id?: string;
   quantity: number;
+  product_name?: string;
+  product_image?: string;
+  unit_price?: number;
   customizations?: { key: string; value: string; price_adjustment?: number }[];
   is_gift?: boolean;
   gift_message?: string;

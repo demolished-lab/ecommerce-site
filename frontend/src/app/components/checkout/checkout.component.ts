@@ -135,6 +135,9 @@ import { Router } from '@angular/router';
                 Your cart is empty.
               </div>
               <div class="cart-item" *ngFor="let item of cart?.items">
+                <div class="item-thumbnail">
+                  <img [src]="item.product_image || 'https://placehold.co/50x50/eeeeee/999999?text=Product'" [alt]="item.product_name" />
+                </div>
                 <div class="item-details">
                   <span class="item-name">{{ item.product_name }}</span>
                   <span class="item-qty">Qty: {{ item.quantity }}</span>
@@ -346,34 +349,63 @@ import { Router } from '@angular/router';
     }
 
     .cart-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 16px;
+      align-items: center;
       margin-bottom: 16px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #f1f5f9;
+    }
+
+    .item-thumbnail {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: white;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .item-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
     .item-details {
       display: flex;
       flex-direction: column;
-      padding-right: 12px;
+      padding-right: 4px;
     }
 
     .item-name {
-      font-weight: 500;
-      color: #334155;
-      font-size: 14px;
-      line-height: 1.4;
-      margin-bottom: 4px;
+      font-weight: 600;
+      color: #0f172a;
+      font-size: 13px;
+      line-height: 1.3;
+      margin-bottom: 2px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     .item-qty {
-      font-size: 13px;
+      font-size: 11px;
       color: #64748b;
+      font-weight: 500;
     }
 
     .item-price {
-      font-weight: 600;
-      color: #0f172a;
+      font-weight: 700;
+      color: #1e293b;
+      font-size: 14px;
     }
 
     .summary-rows {

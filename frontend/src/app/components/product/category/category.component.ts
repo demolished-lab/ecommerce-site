@@ -124,13 +124,17 @@ export class CategoryComponent implements OnInit {
         this.categorySlug = params.get('slug') || '';
         // In a real app we'd fetch products by category slug.
         // For the mock, we'll fetch all featured and filter if possible.
-        return this.productService.getFeaturedProducts(20).pipe(
+        return this.productService.getFeaturedProducts(100).pipe(
           map(products => {
             if (!this.categorySlug || this.categorySlug === 'all') return products;
             
-            // Try to filter by matching category name lightly (e.g. fashion)
-            const filtered = products.filter(p => p.tags.includes(this.categorySlug.toLowerCase()));
-            return filtered.length > 0 ? filtered : products; // Fallback to all if empty to look good
+            // Filter by slug matching either category_id, category_name (slugified), or tags
+            const slug = this.categorySlug.toLowerCase();
+            return products.filter(p => 
+              p.category_id?.toLowerCase() === slug || 
+              p.category_name?.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-') === slug ||
+              p.tags?.some(tag => tag.toLowerCase() === slug) // Improved tag filtering
+            );
           })
         );
       })
@@ -138,7 +142,13 @@ export class CategoryComponent implements OnInit {
   }
 
   addToCart(product: Product): void {
-    this.cartService.addItem({ product_id: product.id, quantity: 1 }).subscribe({
+    this.cartService.addItem({ 
+      product_id: product.id, 
+      quantity: 1,
+      product_name: product.title,
+      product_image: product.primary_image,
+      unit_price: product.price
+    }).subscribe({
       next: () => {
         this.snackBar.open(`${product.title} added to cart`, 'Close', {
           duration: 3000,

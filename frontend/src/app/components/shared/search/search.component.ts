@@ -125,8 +125,23 @@ export class SearchComponent implements OnInit {
   search(): void {
     if (!this.query) return;
     this.loading = true;
-    this.productService.getFeaturedProducts(50).subscribe({
-      next: (products) => { this.results = products; this.loading = false; },
+    this.productService.getFeaturedProducts(100).subscribe({
+      next: (products) => { 
+        const q = this.query.toLowerCase();
+        this.results = products.filter(p => 
+          p.title.toLowerCase().includes(q) || 
+          p.description.toLowerCase().includes(q) ||
+          p.category_name?.toLowerCase().includes(q) ||
+          p.tags?.some(tag => tag.toLowerCase().includes(q))
+        );
+        
+        // Apply sorting
+        if (this.sortBy === 'price_asc') this.results.sort((a,b) => a.price - b.price);
+        else if (this.sortBy === 'price_desc') this.results.sort((a,b) => b.price - a.price);
+        else if (this.sortBy === 'rating') this.results.sort((a,b) => b.average_rating - a.average_rating);
+        
+        this.loading = false; 
+      },
       error: () => { this.results = []; this.loading = false; },
     });
   }
@@ -134,7 +149,13 @@ export class SearchComponent implements OnInit {
   addToCart(event: Event, product: Product): void {
     event.preventDefault();
     event.stopPropagation();
-    this.cartService.addItem({ product_id: product.id, quantity: 1 }).subscribe({
+    this.cartService.addItem({ 
+      product_id: product.id, 
+      quantity: 1,
+      product_name: product.title,
+      product_image: product.primary_image,
+      unit_price: product.price
+    }).subscribe({
       next: () => {
         this.snackBar.open(`${product.title} added to cart`, 'Close', {
           duration: 3000,

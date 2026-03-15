@@ -49,7 +49,7 @@ import { MatSnackBarModule, MatSnackBar } from "@angular/material/snack-bar";
               <a
                 mat-stroked-button
                 routerLink="/become-seller"
-                class="hero-btn"
+                class="hero-btn sell-btn"
               >
                 Start Selling
               </a>
@@ -66,24 +66,26 @@ import { MatSnackBarModule, MatSnackBar } from "@angular/material/snack-bar";
             class="categories-grid"
             *ngIf="categories$ | async as categories"
           >
-            <mat-card
-              *ngFor="let category of categories"
-              class="category-card"
+            <div
+              *ngFor="let category of categories; let i = index"
+              class="category-card cat-reveal"
+              [style.animation-delay]="i * 0.1 + 's'"
               [routerLink]="['/category', category.slug]"
             >
-              <mat-card-content class="category-content">
-                <mat-icon class="category-icon" *ngIf="category.icon">{{
-                  category.icon
-                }}</mat-icon>
-                <mat-icon class="category-icon" *ngIf="!category.icon"
-                  >category</mat-icon
-                >
-                <h3 class="category-name">{{ category.name }}</h3>
-                <p class="category-count">
-                  {{ category.product_count || 0 }} Products
-                </p>
-              </mat-card-content>
-            </mat-card>
+              <div class="category-banner">
+                <img [src]="category.image_url || 'https://images.unsplash.com/photo-1549463591-24c18d2bd12a?q=80&w=400&auto=format&fit=crop'" [alt]="category.name" class="banner-img" />
+                <div class="banner-overlay"></div>
+              </div>
+              <div class="category-glass-content">
+                <div class="icon-floating">
+                  <mat-icon>{{ category.icon || 'category' }}</mat-icon>
+                </div>
+                <div class="text-content">
+                  <h3 class="category-name">{{ category.name }}</h3>
+                  <span class="count-chip">{{ category.product_count || 0 }} Items</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -124,6 +126,9 @@ import { MatSnackBarModule, MatSnackBar } from "@angular/material/snack-bar";
                   *ngIf="product.discount_percentage > 0"
                 >
                   -{{ product.discount_percentage }}%
+                </div>
+                <div class="stock-badge" [class.out-of-stock]="product.stock_quantity === 0">
+                  {{ product.stock_quantity > 0 ? product.stock_quantity + ' available' : 'Sold Out' }}
                 </div>
               </div>
               <mat-card-content class="product-content">
@@ -201,9 +206,12 @@ import { MatSnackBarModule, MatSnackBar } from "@angular/material/snack-bar";
 
       /* Hero Section */
       .hero-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1920&auto=format&fit=crop');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
         color: white;
-        padding: 120px 0 80px;
+        padding: 160px 0 120px;
         text-align: center;
       }
 
@@ -232,6 +240,19 @@ import { MatSnackBarModule, MatSnackBar } from "@angular/material/snack-bar";
         font-size: 16px;
       }
 
+      .sell-btn {
+        background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%) !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 4px 14px 0 rgba(183, 28, 28, 0.39) !important;
+        transition: transform 0.2s, box-shadow 0.2s !important;
+      }
+
+      .sell-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(183, 28, 28, 0.5) !important;
+      }
+
       /* Section Styles */
       section {
         padding: 64px 0;
@@ -258,45 +279,118 @@ import { MatSnackBarModule, MatSnackBar } from "@angular/material/snack-bar";
 
       .categories-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 24px;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 32px;
+        padding: 20px 0;
       }
 
       .category-card {
+        position: relative;
+        height: 220px;
+        border-radius: 24px;
+        overflow: hidden;
         cursor: pointer;
-        transition:
-          transform 0.2s,
-          box-shadow 0.2s;
-        text-align: center;
+        transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
       }
 
       .category-card:hover {
+        transform: translateY(-12px);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+      }
+
+      .category-banner {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+      }
+
+      .banner-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.8s ease;
+      }
+
+      .category-card:hover .banner-img {
+        transform: scale(1.15);
+      }
+
+      .banner-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 100%);
+      }
+
+      .category-glass-content {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        z-index: 1;
+        transition: transform 0.3s ease, background 0.3s ease;
+      }
+
+      .category-card:hover .category-glass-content {
+        background: rgba(255, 255, 255, 0.25);
         transform: translateY(-4px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
       }
 
-      .category-content {
-        padding: 32px 16px;
+      .icon-floating {
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.9);
+        color: #3f51b5;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.4s ease;
       }
 
-      .category-icon {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
-        margin-bottom: 16px;
-        color: #1976d2;
+      .category-card:hover .icon-floating {
+        transform: rotate(-12deg) scale(1.1);
       }
 
-      .category-name {
-        font-size: 16px;
-        font-weight: 500;
-        margin: 0 0 8px;
-      }
-
-      .category-count {
-        font-size: 14px;
-        color: #666;
+      .text-content h3 {
         margin: 0;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: white;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        letter-spacing: -0.2px;
+      }
+
+      .count-chip {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* Entrance Animation */
+      .cat-reveal {
+        opacity: 0;
+        transform: translateY(40px);
+        animation: revealCat 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+      }
+
+      @keyframes revealCat {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       /* Products Grid */
@@ -350,8 +444,28 @@ import { MatSnackBarModule, MatSnackBar } from "@angular/material/snack-bar";
         color: white;
         padding: 4px 12px;
         border-radius: 12px;
-        font-size: 12px;
-        font-weight: 500;
+        font-size: 11px;
+        font-weight: 600;
+        z-index: 2;
+      }
+
+      .stock-badge {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(4px);
+        color: #2e7d32;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        z-index: 2;
+      }
+
+      .stock-badge.out-of-stock {
+        color: #c62828;
       }
 
       .product-content {
@@ -499,7 +613,13 @@ export class HomeComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
     
-    this.cartService.addItem({ product_id: product.id, quantity: 1 }).subscribe({
+    this.cartService.addItem({ 
+      product_id: product.id, 
+      quantity: 1,
+      product_name: product.title,
+      product_image: product.primary_image,
+      unit_price: product.price
+    }).subscribe({
       next: () => {
         this.snackBar.open(`${product.title} added to cart`, 'Close', {
           duration: 3000,
